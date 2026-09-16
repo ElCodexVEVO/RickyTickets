@@ -1,0 +1,186 @@
+import { StyleSheet } from "@react-pdf/renderer";
+
+// Paleta de marca reutilizada del sistema de diseño (negro carbón / dorado / crema / gris).
+export const colors = {
+  carbon: "#0B0B0D",
+  carbonSoft: "#1C1B21",
+  gold: "#C9A227",
+  goldSoft: "#E6CD8E",
+  cream: "#FAF8F3",
+  creamLine: "#E5E1D8",
+  ink: "#18161A",
+  inkDim: "#6B6862",
+  positive: "#2F7D52",
+  positiveBg: "#E4F1E9",
+  pending: "#9C7A22",
+  pendingBg: "#F4ECD8",
+  neutralBg: "#F1EEE6",
+};
+
+export const ticketStyles = StyleSheet.create({
+  page: {
+    backgroundColor: "#FFFFFF",
+    fontFamily: "Helvetica",
+    fontSize: 9.5,
+    color: colors.ink,
+    paddingBottom: 32,
+  },
+  header: {
+    backgroundColor: colors.carbon,
+    paddingHorizontal: 36,
+    paddingVertical: 26,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  logoImage: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+  },
+  brandName: {
+    color: "#FAF8F3",
+    fontFamily: "Helvetica-Bold",
+    fontSize: 9,
+    letterSpacing: 1.4,
+  },
+  brandTagline: {
+    color: colors.gold,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 16,
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  brandSub: {
+    color: "#A39E95",
+    fontSize: 6.5,
+    letterSpacing: 1.2,
+    marginTop: 3,
+  },
+  headerRight: {
+    alignItems: "flex-end",
+  },
+  folioLabel: {
+    color: "#A39E95",
+    fontSize: 6.5,
+    letterSpacing: 1.4,
+  },
+  folioValue: {
+    color: "#FAF8F3",
+    fontFamily: "Helvetica-Bold",
+    fontSize: 14,
+    marginTop: 2,
+  },
+  body: {
+    paddingHorizontal: 36,
+    paddingTop: 22,
+  },
+  row: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: colors.creamLine,
+    paddingVertical: 8,
+  },
+  rowLabel: {
+    width: 150,
+    color: colors.inkDim,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  rowValue: {
+    flex: 1,
+    color: colors.ink,
+    fontSize: 10,
+  },
+  sectionTitle: {
+    marginTop: 18,
+    marginBottom: 4,
+    color: colors.gold,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  priceBlock: {
+    marginTop: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  priceLabel: {
+    color: colors.inkDim,
+    fontSize: 8,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  priceValue: {
+    color: colors.ink,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 22,
+    marginTop: 4,
+  },
+  statusPill: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  statusPillText: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  qrImage: {
+    width: 78,
+    height: 78,
+  },
+  thankYou: {
+    marginTop: 14,
+    color: colors.inkDim,
+    fontFamily: "Helvetica-Oblique",
+    fontSize: 11,
+  },
+  footer: {
+    marginTop: 26,
+    marginHorizontal: 36,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.creamLine,
+  },
+  footerTitle: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+    color: colors.ink,
+    marginBottom: 2,
+  },
+  footerText: {
+    fontSize: 7.5,
+    color: colors.inkDim,
+    lineHeight: 1.4,
+    marginBottom: 8,
+  },
+  footerBottom: {
+    marginTop: 4,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  footerContact: {
+    fontSize: 7.5,
+    color: colors.inkDim,
+  },
+  footerBrand: {
+    fontSize: 7,
+    color: "#A39E95",
+    letterSpacing: 0.8,
+  },
+});
