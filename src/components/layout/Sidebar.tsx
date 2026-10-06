@@ -6,8 +6,6 @@ import {
   CalendarRange,
   CalendarDays,
   Users,
-  Car,
-  IdCard,
   BarChart3,
   Settings,
   UserCog,
@@ -32,11 +30,7 @@ const groups = [
   },
   {
     label: "Directorio",
-    items: [
-      { to: "/clientes", label: "Clientes", icon: Users },
-      { to: "/conductores", label: "Conductores", icon: IdCard },
-      { to: "/vehiculos", label: "Vehículos", icon: Car },
-    ],
+    items: [{ to: "/clientes", label: "Clientes", icon: Users }],
   },
   {
     label: "Gestión",

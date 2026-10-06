@@ -190,14 +190,11 @@
   .operations-map-legend .scheduled {
     background: #7bb2f5;
   }
-  .operations-map-legend .unassigned {
+  .operations-map-legend .pending {
     background: #e1bd68;
   }
   .operations-map-legend .in-service {
     background: #75d4a7;
-  }
-  .operations-map-legend .conflict {
-    background: #f18181;
   }
   .operations-map-legend .completed {
     background: #a6afb4;
@@ -281,9 +278,6 @@
     font-size: 11px;
     color: var(--color-ink-500);
     overflow-wrap: anywhere;
-  }
-  .operations-missing {
-    color: var(--color-gold-300);
   }
   .operations-service-bottom {
     display: flex;
@@ -416,27 +410,6 @@
     margin-top: 12px;
     font-size: 11px;
     color: var(--color-ink-500);
-  }
-  .operations-warnings {
-    padding: 10px;
-    margin-top: 12px;
-    border: 1px solid #f1818130;
-    border-radius: 6px;
-    background: #f1818108;
-    font-size: 11px;
-    color: var(--color-danger-500);
-  }
-  .operations-warnings ul {
-    list-style: disc;
-    padding-left: 14px;
-    margin-top: 5px;
-  }
-  .operations-warnings li + li {
-    margin-top: 5px;
-  }
-  .operations-warnings p {
-    color: var(--color-ink-500);
-    margin-top: 7px;
   }
   .operations-detail-actions {
     position: sticky;

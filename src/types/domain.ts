@@ -13,6 +13,7 @@ export interface TicketData {
   customerName: string;
   phone: string;
   email?: string;
+  serviceLabel?: string;
   pickupPoint: string;
   dropoffPoint: string;
   hotel?: string;
@@ -22,15 +23,20 @@ export interface TicketData {
   time?: string;
   airline?: string;
   flightNumber?: string;
+  flightDate?: string;
+  flightTime?: string;
   serviceType: ServiceType;
   returnDate?: string;
+  // Sin hora en un trayecto redondo = «Por determinar».
   returnTime?: string;
   returnPickupPoint?: string;
   returnDropoffPoint?: string;
   returnAirline?: string;
   returnFlightNumber?: string;
   price?: number;
+  // undefined = reservación anterior sin registro de anticipo.
+  deposit?: number;
   currency: CurrencyCode;
-  vehicleName?: string;
-  driverName?: string;
+  paymentMethod?: string;
+  notes?: string;
 }

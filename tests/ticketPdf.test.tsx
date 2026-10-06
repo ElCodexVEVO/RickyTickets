@@ -26,13 +26,30 @@ const fixture: TicketData = {
   currency: "USD",
 };
 
+const paid: Partial<TicketData> = {
+  serviceLabel: "Aeropuerto → Hotel",
+  airline: "Volaris",
+  flightNumber: "Y4 123",
+  flightDate: "2026-10-06",
+  flightTime: "09:15",
+  hotel: "Hotel de prueba",
+  room: "208",
+  price: 1850,
+  deposit: 500,
+  currency: "MXN",
+  paymentMethod: "Transferencia",
+  notes: "Silla para bebé.",
+};
+
 describe("PDF real de una reservación redonda", () => {
   it.each([
-    ["pendiente", undefined],
-    ["confirmado", "16:30"],
-  ])(
+    ["pendiente", undefined, {}],
+    ["confirmado", "16:30", {}],
+    ["anticipo", undefined, paid],
+    ["pagado", "16:30", { ...paid, deposit: 1850 }],
+  ] as [string, string | undefined, Partial<TicketData>][])(
     "genera el ticket %s con el logo y un QR real",
-    async (name, returnTime) => {
+    async (name, returnTime, extra) => {
       const logo = await readFile(path.resolve("src/assets/logo.png"));
       const qr = await QRCode.toDataURL(
         "http://localhost:5173/verificar/00000000-0000-4000-8000-000000000001",
@@ -40,7 +57,7 @@ describe("PDF real de una reservación redonda", () => {
       );
       const buffer = await renderToBuffer(
         <TicketDocument
-          data={{ ...fixture, returnTime }}
+          data={{ ...fixture, ...extra, returnTime }}
           qrDataUrl={qr}
           logoSrc={`data:image/png;base64,${logo.toString("base64")}`}
           companyInfo={{

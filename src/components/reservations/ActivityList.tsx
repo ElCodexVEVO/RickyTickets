@@ -2,34 +2,34 @@ import { useActivity } from "@/features/activity/hooks";
 import { QueryState } from "@/components/ui/QueryState";
 import { returnTimeLabel } from "@/lib/operations";
 import { formatDate } from "@/lib/format";
+import { statusLabels } from "@/components/reservations/StatusBadge";
+import type { ReservationStatus } from "@/types/database.types";
 const actions: Record<string, string> = {
   create_reservation: "creó la reservación",
   cancel_reservation: "canceló la reservación",
   delete_reservation: "ocultó la reservación",
   update_reservation: "actualizó la reservación",
 };
+// driver_id/vehicle_id solo aparecen en eventos históricos anteriores a 0008.
 const fieldLabels: Record<string, string> = {
   return_time: "Hora de regreso",
   return_date: "Fecha de regreso",
-  driver_id: "Conductor",
-  vehicle_id: "Vehículo",
+  driver_id: "Conductor (histórico)",
+  vehicle_id: "Vehículo (histórico)",
   status: "Estado",
   date: "Fecha",
   time: "Hora",
   price: "Precio",
+  deposit: "Anticipo",
   passengers: "Pasajeros",
   pickup_point: "Recogida",
   dropoff_point: "Destino",
+  return_pickup_point: "Recogida de regreso",
+  return_dropoff_point: "Destino de regreso",
   payment_method: "Método de pago",
   currency: "Moneda",
   flight_number: "Vuelo",
-};
-const statuses: Record<string, string> = {
-  pending: "Pendiente",
-  confirmed: "Confirmado",
-  in_service: "En servicio",
-  completed: "Completado",
-  cancelled: "Cancelado",
+  flight_time: "Hora del vuelo",
 };
 export function ActivityList({ entityId }: { entityId?: string }) {
   const query = useActivity(entityId);
@@ -76,7 +76,8 @@ export function ActivityList({ entityId }: { entityId?: string }) {
                     field === "return_time"
                       ? returnTimeLabel(typeof v === "string" ? v : null)
                       : field === "status"
-                        ? (statuses[String(v)] ?? String(v))
+                        ? (statusLabels[String(v) as ReservationStatus] ??
+                          String(v))
                         : v == null
                           ? "Sin asignar"
                           : String(v);

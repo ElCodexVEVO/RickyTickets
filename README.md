@@ -35,7 +35,7 @@ El build se genera en `dist/`. El hosting debe redirigir las rutas de la aplicac
 
 ## Supabase y migraciones
 
-**Las migraciones nuevas 0005 y 0006 están preparadas y probadas localmente; no se aplicaron a la base real.**
+**Las migraciones 0005 a 0008 están preparadas y probadas localmente; no se aplicaron a la base real.**
 
 Para una instalación nueva, aplica los archivos en orden:
 
@@ -45,10 +45,12 @@ Para una instalación nueva, aplica los archivos en orden:
 4. `0004_public_ticket_verification.sql`: RPC para verificar el ticket mediante QR; cambio local que ya existía.
 5. `0005_staff_security_and_activity.sql`: acceso de empleados activos, bloqueo de altas públicas y auditoría de cambios.
 6. `0006_reservation_service_catalog.sql`: servicio configurable opcional de la reservación.
+7. `0007_reservation_locations.sql`: coordenadas opcionales de recogida y destino.
+8. `0008_single_page_reservations.sql`: borradores, anticipo y hora del vuelo; marca como obsoletas las tablas de flota sin eliminarlas ([detalle](docs/RESERVACION_UNA_PAGINA.md)).
 
 En una base existente, revisa qué migraciones están aplicadas, realiza un respaldo y prueba las pendientes en una copia antes de aplicarlas. **No vuelvas a ejecutar el esquema inicial ni el seed en producción.** 0005 conserva las políticas previas y añade restricciones; 0006 conserva `sencillo/redondo` y no modifica reservaciones históricas. Ninguna de las dos añade datos demo.
 
-`return_time` ya admite `NULL`: “Por determinar” funciona sin añadir una columna de estado pendiente. Las medianoches históricas `00:00` se conservan como horas reales. La selección de servicio del catálogo se habilita cuando está disponible la columna de 0006; ubicaciones y métodos de pago reutilizan la tabla existente.
+`return_time` ya admite `NULL`: “Por determinar” funciona sin añadir una columna de estado pendiente. Sin 0008, «Guardar borrador», el anticipo y la hora del vuelo aparecen desactivados con un aviso; el resto del formulario funciona. Las medianoches históricas `00:00` se conservan como horas reales. La selección de servicio del catálogo se habilita cuando está disponible la columna de 0006; ubicaciones y métodos de pago reutilizan la tabla existente.
 
 ## Acceso y empleados
 
@@ -78,7 +80,7 @@ npm audit
 - `lint`: TypeScript estricto y formato Prettier. Se reparó el script previo sin forzar un parser ESLint incompatible con TypeScript 7.
 - `format`: formatea `src`, pruebas y documentación.
 - Las pruebas SQL usan PostgreSQL aislado en memoria con PGlite y no acceden a Supabase.
-- Las pruebas del formulario simulan todos los hooks remotos: avanzar los seis pasos no envía datos; Guardar realiza un único envío.
+- Las pruebas del formulario simulan todos los hooks remotos: cubren solo ida, ida y regreso, «Por determinar», vuelo, hotel, estados de pago, borrador, edición y un único envío por guardado.
 - Las pruebas PDF utilizan la plantilla real, logo y QR con datos aislados. No suben archivos. `RICKY_PDF_QA=1` conserva dos PDFs temporales en `tmp/pdfs/` para inspección; esa carpeta está excluida de Git.
 
 En el entorno restringido de Codex para Windows fue necesario ejecutar build/pruebas PDF fuera del sandbox para resolver archivos de PDFKit. Los comandos anteriores funcionan en la terminal normal del proyecto.
@@ -86,11 +88,10 @@ En el entorno restringido de Codex para Windows fue necesario ejecutar build/pru
 ## Funciones principales
 
 - Dashboard con servicios de ida/regreso, despacho, alertas y cifras reales.
-- Búsqueda global, navegación colapsable y panel de nueva reservación que conserva el borrador al cerrarse durante la sesión.
-- Formulario progresivo, edición completa, regreso pendiente y regeneración de PDF.
+- Búsqueda global y navegación colapsable.
+- Nueva reservación en una sola página con resumen en tiempo real: cliente, servicio y ruta, vuelo, hotel, pago con anticipo/restante/estado y notas. Borradores, regreso «Por determinar», edición con la misma pantalla y regeneración de PDF.
 - Reservaciones en tabla, agenda y operaciones; agenda diaria, semanal y mensual.
-- Advertencias de capacidad, disponibilidad y proximidad de asignaciones.
-- Flota, conductores, CRM, notas del cliente, catálogos, cancelaciones con motivo, actividad y versiones de ticket.
+- CRM, notas del cliente, catálogos, cancelaciones con motivo, actividad y versiones de ticket. La gestión de conductores y vehículos se retiró del sistema.
 - Reportes por periodo y moneda, CSV compatible con Excel y PDF mediante impresión del navegador.
 - Plantillas de WhatsApp mediante enlaces estándar; el operador revisa y envía el mensaje.
 

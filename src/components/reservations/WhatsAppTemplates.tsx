@@ -17,7 +17,7 @@ export function WhatsAppTemplates({
   const messages: Record<string, string> = {
     Confirmación: `Hola ${r.customer?.full_name ?? ""}, tu reservación ${r.folio} de Danny Transfers está ${r.status === "confirmed" ? "confirmada" : "registrada"}. ${route}. ${r.date} a las ${r.time.slice(0, 5)}.${r.service_type === "redondo" ? ` Regreso: ${r.return_date}, ${returnTimeLabel(r.return_time)}.` : ""}`,
     Recordatorio: `Recordatorio de tu servicio Danny Transfers ${r.folio}: ${route}, ${r.date} a las ${r.time.slice(0, 5)}.`,
-    "Conductor en camino": `Hola, el conductor ${r.driver?.full_name ?? "asignado"} va en camino para tu servicio ${r.folio}.`,
+    "Conductor en camino": `Hola, tu conductor de Danny Transfers va en camino para tu servicio ${r.folio}.`,
     "Conductor llegó": `Hola, el conductor de tu servicio ${r.folio} ha llegado al punto de recogida: ${r.pickup_point}.`,
     "Cambio de horario": `Actualización de Danny Transfers ${r.folio}: salida ${r.date} a las ${r.time.slice(0, 5)}.${r.service_type === "redondo" ? ` Regreso ${r.return_date}: ${returnTimeLabel(r.return_time)}.` : ""}`,
     Ticket: `Tu ticket Danny Transfers ${r.folio}: ${ticket}`,

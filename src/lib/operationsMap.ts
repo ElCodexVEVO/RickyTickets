@@ -1,50 +1,35 @@
 import {
-  assignmentWarnings,
   operationClock,
   operationDate,
   serviceLegs,
   type OperationAlert,
   type ServiceLeg,
 } from "@/lib/operations";
-import type {
-  DriverRow,
-  ReservationWithRelations,
-  VehicleRow,
-} from "@/types/database.types";
+import type { ReservationWithRelations } from "@/types/database.types";
 
 export type MapStateFilter =
-  "all" | "upcoming" | "en_route" | "in_service" | "unassigned";
+  "all" | "upcoming" | "en_route" | "in_service" | "pending";
 export type MapTimeFilter = "today" | "next2h" | "day";
 export interface MapFilters {
   state: MapStateFilter;
   period: MapTimeFilter;
   date: string;
 }
-export interface OperationsService extends ServiceLeg {
-  warnings: string[];
-}
+export type OperationsService = ServiceLeg;
 export interface GeoPoint {
   latitude: number;
   longitude: number;
 }
 // Adapter contract: resolved coordinates must come from a verified, persisted source.
-// These fields are NOT queried from the current reservation schema.
 export interface ServiceGeography {
   origin?: GeoPoint;
   destination?: GeoPoint;
   route?: { type: "LineString"; coordinates: [number, number][] };
 }
 export type OperationsGeography = Readonly<Record<string, ServiceGeography>>;
-// Reserved for a future authenticated driver location feed; V1 never consumes it.
-export interface DriverLocationUpdate extends GeoPoint {
-  driver_id: string;
-  reservation_id: string;
-  last_location_update: string;
-}
 export const mapStates = {
   scheduled: { label: "Programado", color: "#7bb2f5" },
-  pending: { label: "Pendiente de confirmar", color: "#7bb2f5" },
-  unassigned: { label: "Por asignar", color: "#e1bd68" },
+  pending: { label: "Por confirmar", color: "#e1bd68" },
   in_service: { label: "En servicio", color: "#75d4a7" },
   completed: { label: "Completado", color: "#a6afb4" },
 };
@@ -52,29 +37,14 @@ export function serviceMapState(service: ServiceLeg) {
   const r = service.reservation;
   if (r.status === "completed") return mapStates.completed;
   if (r.status === "in_service") return mapStates.in_service;
-  if (!r.driver_id || !r.vehicle_id) return mapStates.unassigned;
   return r.status === "pending" ? mapStates.pending : mapStates.scheduled;
 }
 export function operationsServices(
   reservations: ReservationWithRelations[],
-  vehicles: VehicleRow[],
-  drivers: DriverRow[],
 ): OperationsService[] {
-  const active = reservations.filter(
-    (r) => !r.deleted_at && r.status !== "cancelled",
+  return serviceLegs(
+    reservations.filter((r) => !r.deleted_at && r.status !== "cancelled"),
   );
-  const warnings = new Map(
-    active.map((r) => [
-      r.id,
-      r.status === "completed"
-        ? []
-        : assignmentWarnings(r, active, vehicles, drivers),
-    ]),
-  );
-  return serviceLegs(active).map((leg) => ({
-    ...leg,
-    warnings: warnings.get(leg.reservation.id) ?? [],
-  }));
 }
 function localMinute(date: string, time: string) {
   return (
@@ -105,8 +75,7 @@ export function filterOperationsServices(
     }
     if (filters.state === "en_route") return false; // Not recorded by the current database.
     if (filters.state === "in_service") return r.status === "in_service";
-    if (filters.state === "unassigned")
-      return r.status !== "completed" && (!r.driver_id || !r.vehicle_id);
+    if (filters.state === "pending") return r.status === "pending";
     if (filters.state === "upcoming") {
       return (
         ["confirmed", "pending"].includes(r.status) &&
@@ -122,13 +91,12 @@ export function alertServiceKey(
   services: ServiceLeg[],
   today: string,
 ): string | undefined {
+  if (!alert.reservationId) return undefined;
   const candidates = services.filter(
     (s) =>
       !s.reservation.deleted_at &&
       !["completed", "cancelled"].includes(s.reservation.status) &&
-      (alert.reservationId
-        ? s.reservation.id === alert.reservationId
-        : !!alert.vehicleId && s.reservation.vehicle_id === alert.vehicleId),
+      s.reservation.id === alert.reservationId,
   );
   if (alert.kind === "return_pending")
     return (

@@ -168,8 +168,9 @@ export default function ReportsPage() {
           </div>
           <p className="text-xs text-ink-500">
             Importe: confirmadas, en servicio y completadas. No representa
-            cobros recibidos. Se excluyen cancelaciones; las monedas se calculan
-            por separado.
+            cobros recibidos. Se excluyen cancelaciones y borradores; las
+            monedas se calculan por separado. El estado de pago usa el anticipo
+            registrado desde la migración 0008.
           </p>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <Card className="min-w-0 p-4">
@@ -240,11 +241,10 @@ export default function ReportsPage() {
               </div>
             </Card>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <Breakdown title="Rutas más solicitadas" items={report.routes} />
-            <Breakdown title="Servicios por conductor" items={report.drivers} />
-            <Breakdown title="Uso de vehículos" items={report.vehicles} />
             <Breakdown title="Métodos de pago" items={report.payments} />
+            <Breakdown title="Estado de pago" items={report.paymentStatus} />
           </div>
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">

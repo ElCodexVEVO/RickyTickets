@@ -10,10 +10,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import type {
-  ReservationWithRelations,
-  VehicleRow,
-} from "@/types/database.types";
+import type { ReservationWithRelations } from "@/types/database.types";
 const mocks = vi.hoisted(() => ({
   canEdit: true,
   update: vi.fn(async (_payload: unknown) => ({})),
@@ -55,8 +52,6 @@ function row(
       phone: "+529990000000",
       email: null,
     },
-    driver: null,
-    vehicle: null,
     service_type: "sencillo",
     pickup_point: "Origen local",
     dropoff_point: "Destino local",
@@ -78,8 +73,7 @@ function row(
     currency: "USD",
     payment_method: null,
     notes: null,
-    vehicle_id: null,
-    driver_id: null,
+    deposit: 0,
     status: "confirmed",
     created_by: null,
     created_at: "2026-10-01T00:00:00Z",
@@ -104,8 +98,6 @@ function mount(reservations = [row()], geography?: OperationsGeography) {
     <MemoryRouter>
       <OperationsMap
         reservations={reservations}
-        vehicles={[]}
-        drivers={[]}
         now={now}
         geography={geography}
       />
@@ -114,16 +106,12 @@ function mount(reservations = [row()], geography?: OperationsGeography) {
 }
 describe("Mapa de operaciones con datos aislados", () => {
   it("excluye cancelados y borrados; Hoy excluye completados y Todo el día los conserva", () => {
-    const services = operationsServices(
-      [
-        row(),
-        row({ id: "completed", status: "completed" }),
-        row({ id: "cancelled", status: "cancelled" }),
-        row({ id: "deleted", deleted_at: "2026-10-06T00:00Z" }),
-      ],
-      [],
-      [],
-    );
+    const services = operationsServices([
+      row(),
+      row({ id: "completed", status: "completed" }),
+      row({ id: "cancelled", status: "cancelled" }),
+      row({ id: "deleted", deleted_at: "2026-10-06T00:00Z" }),
+    ]);
     expect(services.map((s) => s.reservation.id)).toEqual([
       "local",
       "completed",
@@ -138,20 +126,16 @@ describe("Mapa de operaciones con datos aislados", () => {
     ).toHaveLength(2);
   });
   it("Próximas 2 h cruza medianoche y no inventa hora para el regreso", () => {
-    const services = operationsServices(
-      [
-        row({
-          time: "23:45",
-          service_type: "redondo",
-          return_date: "2026-10-07",
-          return_time: null,
-        }),
-        row({ id: "tomorrow", date: "2026-10-07", time: "00:30" }),
-        row({ id: "outside", date: "2026-10-07", time: "02:00" }),
-      ],
-      [],
-      [],
-    );
+    const services = operationsServices([
+      row({
+        time: "23:45",
+        service_type: "redondo",
+        return_date: "2026-10-07",
+        return_time: null,
+      }),
+      row({ id: "tomorrow", date: "2026-10-07", time: "00:30" }),
+      row({ id: "outside", date: "2026-10-07", time: "02:00" }),
+    ]);
     const result = filterOperationsServices(
       services,
       filters({ period: "next2h" }),
@@ -159,22 +143,15 @@ describe("Mapa de operaciones con datos aislados", () => {
     );
     expect(result.map((s) => s.key)).toEqual(["local-out", "tomorrow-out"]);
   });
-  it("filtra asignación y estado real sin convertir confirmados en En camino", () => {
-    const services = operationsServices(
-      [
-        row(),
-        row({
-          id: "assigned",
-          driver_id: "d1",
-          vehicle_id: "v1",
-          time: "12:00",
-        }),
-        row({ id: "active", status: "in_service", time: "09:00" }),
-        row({ id: "past", time: "09:30" }),
-      ],
-      [],
-      [],
-    );
+  it("filtra por estado real sin convertir confirmados en En camino", () => {
+    const services = operationsServices([
+      row(),
+      row({ id: "pending", status: "pending", time: "12:00" }),
+      row({ id: "active", status: "in_service", time: "09:00" }),
+      row({ id: "past", time: "09:30" }),
+      row({ id: "draft", status: "draft", time: "13:00" }),
+    ]);
+    expect(services.map((s) => s.reservation.id)).not.toContain("draft");
     expect(
       filterOperationsServices(
         services,
@@ -183,8 +160,12 @@ describe("Mapa de operaciones con datos aislados", () => {
       ).map((s) => s.key),
     ).toEqual(["active-out"]);
     expect(
-      filterOperationsServices(services, filters({ state: "unassigned" }), now),
-    ).toHaveLength(3);
+      filterOperationsServices(
+        services,
+        filters({ state: "pending" }),
+        now,
+      ).map((s) => s.key),
+    ).toEqual(["pending-out"]);
     expect(
       filterOperationsServices(services, filters({ state: "upcoming" }), now),
     ).toHaveLength(2);
@@ -192,22 +173,14 @@ describe("Mapa de operaciones con datos aislados", () => {
       filterOperationsServices(services, filters({ state: "en_route" }), now),
     ).toHaveLength(0);
   });
-  it("enlaza alertas de regreso pendiente y mantenimiento con el trayecto adecuado", () => {
+  it("enlaza alertas de regreso pendiente y por confirmar con el trayecto adecuado", () => {
     const r = row({
       service_type: "redondo",
+      status: "pending",
       return_date: "2026-10-07",
-      vehicle_id: "v1",
     });
-    const v = {
-      id: "v1",
-      brand: "Marca",
-      model: "Unidad",
-      plate: "LOCAL",
-      capacity: 6,
-      status: "maintenance",
-    } as VehicleRow;
-    const services = operationsServices([r], [v], []);
-    const alerts = operationAlerts([r], [v], [], "2026-10-06");
+    const services = operationsServices([r]);
+    const alerts = operationAlerts([r], "2026-10-06");
     expect(
       alertServiceKey(
         alerts.find((a) => a.kind === "return_pending")!,
@@ -217,16 +190,12 @@ describe("Mapa de operaciones con datos aislados", () => {
     ).toBe("local-back");
     expect(
       alertServiceKey(
-        alerts.find((a) => a.kind === "maintenance")!,
+        alerts.find((a) => a.kind === "pending")!,
         services,
         "2026-10-06",
       ),
     ).toBe("local-out");
-    expect(
-      operationAlerts([row()], [], [], "2026-10-06").some(
-        (a) => a.kind === "vehicle_missing",
-      ),
-    ).toBe(true);
+    expect(operationAlerts([row()], "2026-10-06")).toHaveLength(0);
   });
   it("rechaza coordenadas no finitas/fuera de rango y geometrías incompletas", () => {
     expect(validGeoPoint({ latitude: NaN, longitude: 0 })).toBe(false);
@@ -253,8 +222,8 @@ describe("Mapa de operaciones con datos aislados", () => {
       name: /Detalle del servicio LOCAL-001/,
     });
     expect(within(detail).getByText("Cliente local")).toBeTruthy();
-    expect(within(detail).getByText("Sin conductor")).toBeTruthy();
-    expect(within(detail).getByText("Sin vehículo")).toBeTruthy();
+    expect(within(detail).getByText("Sin hotel")).toBeTruthy();
+    expect(within(detail).queryByText(/conductor|vehículo/i)).toBeNull();
     expect(within(detail).getByText("Ubicación pendiente")).toBeTruthy();
     expect(
       within(detail)
@@ -312,8 +281,6 @@ describe("Mapa de operaciones con datos aislados", () => {
       <MemoryRouter>
         <OperationsMap
           reservations={[r]}
-          vehicles={[]}
-          drivers={[]}
           now={now}
           focusRequest={{ legKey: "local-back", sequence: 1 }}
         />
@@ -369,13 +336,7 @@ describe("Mapa de operaciones con datos aislados", () => {
     };
     view.rerender(
       <MemoryRouter>
-        <OperationsMap
-          reservations={[row()]}
-          vehicles={[]}
-          drivers={[]}
-          now={now}
-          geography={route}
-        />
+        <OperationsMap reservations={[row()]} now={now} geography={route} />
       </MemoryRouter>,
     );
     expect(

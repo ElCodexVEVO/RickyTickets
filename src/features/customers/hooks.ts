@@ -50,9 +50,7 @@ export function useCustomerReservations(customerId: string | undefined) {
     queryFn: async (): Promise<ReservationWithRelations[]> => {
       const { data, error } = await supabase
         .from("reservations")
-        .select(
-          "*, customer:customers(id,full_name,phone,email), vehicle:vehicles(id,brand,model,plate), driver:drivers(id,full_name,phone)",
-        )
+        .select("*, customer:customers(id,full_name,phone,email)")
         .eq("customer_id", customerId!)
         .is("deleted_at", null)
         .order("date", { ascending: false });

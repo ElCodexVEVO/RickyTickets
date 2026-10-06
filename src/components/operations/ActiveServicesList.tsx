@@ -1,4 +1,4 @@
-import { MapPin, AlertTriangle } from "lucide-react";
+import { MapPin } from "lucide-react";
 import {
   hasGeography,
   serviceMapState,
@@ -63,35 +63,12 @@ export function ActiveServicesList({
             {s.pickup} <span>→</span> {s.dropoff}
           </p>
           <p className="operations-service-team">
-            <span
-              className={!s.reservation.driver_id ? "operations-missing" : ""}
-            >
-              {s.reservation.driver?.full_name ??
-                (s.reservation.driver_id
-                  ? "Conductor asignado"
-                  : "Sin conductor")}
-            </span>
-            <span> · </span>
-            <span
-              className={!s.reservation.vehicle_id ? "operations-missing" : ""}
-            >
-              {s.reservation.vehicle
-                ? `${s.reservation.vehicle.model} · ${s.reservation.vehicle.plate}`
-                : s.reservation.vehicle_id
-                  ? "Vehículo asignado"
-                  : "Sin vehículo"}
-            </span>
+            {s.reservation.customer?.full_name ?? "Cliente sin ficha"} ·{" "}
+            {s.reservation.passengers} pax
           </p>
           <div className="operations-service-bottom">
             <ServiceStateBadge service={s} />
             <span className="operations-direction">{s.direction}</span>
-            {s.warnings.length > 0 && (
-              <AlertTriangle
-                size={14}
-                className="text-danger-500"
-                aria-label="Revisar asignación"
-              />
-            )}
           </div>
           {!hasGeography(geography[s.key]) && (
             <span className="operations-location-pending">

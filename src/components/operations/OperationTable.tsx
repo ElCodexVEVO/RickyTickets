@@ -20,7 +20,7 @@ export function OperationTable({
     >
       <div className="overflow-x-auto">
         <table
-          className={`w-full text-[13px] ${compact ? "min-w-[680px]" : "min-w-[760px]"}`}
+          className={`w-full text-[13px] ${compact ? "min-w-[620px]" : "min-w-[700px]"}`}
         >
           <thead>
             <tr className="border-b border-line text-left text-[11px] uppercase tracking-wide text-ink-500">
@@ -28,10 +28,9 @@ export function OperationTable({
                 "Hora",
                 "Folio",
                 "Ruta",
+                "Cliente",
                 "Pasajeros",
                 "Vuelo",
-                "Conductor",
-                "Vehículo",
                 "Estado",
               ].map((h) => (
                 <th className="px-2 py-2" key={h}>
@@ -70,34 +69,16 @@ export function OperationTable({
                   <p>
                     {l.pickup} → {l.dropoff}
                   </p>
-                  {!compact && (
-                    <p className="mt-1 text-[11px] text-ink-500">
-                      {l.reservation.customer?.full_name}
-                    </p>
-                  )}
+                </td>
+                <td className="max-w-40 truncate px-2 py-2 text-ink-700">
+                  {l.reservation.customer?.full_name ?? "—"}
                 </td>
                 <td className="px-2 py-2">{l.reservation.passengers} pax</td>
                 <td className="px-2 py-2 text-ink-500">
                   {l.flight ?? "Sin vuelo"}
                 </td>
                 <td className="px-2 py-2">
-                  {l.reservation.driver?.full_name ?? (
-                    <Badge tone="warning">Por asignar</Badge>
-                  )}
-                </td>
-                <td className="px-2 py-2 text-ink-500">
-                  {l.reservation.vehicle
-                    ? `${l.reservation.vehicle.model} · ${l.reservation.vehicle.plate}`
-                    : "Sin asignar"}
-                </td>
-                <td className="px-2 py-2">
                   <StatusBadge status={l.reservation.status} />
-                  {l.reservation.status === "pending" &&
-                    l.reservation.driver_id && (
-                      <p className="mt-1 text-[11px] text-ink-500">
-                        Programado · por confirmar
-                      </p>
-                    )}
                 </td>
               </tr>
             ))}

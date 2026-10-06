@@ -11,7 +11,7 @@ const states: [MapStateFilter, string][] = [
   ["upcoming", "Por iniciar"],
   ["en_route", "En camino"],
   ["in_service", "En servicio"],
-  ["unassigned", "Sin asignar"],
+  ["pending", "Por confirmar"],
 ];
 const periods: [MapTimeFilter, string][] = [
   ["today", "Hoy"],

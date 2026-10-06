@@ -28,7 +28,7 @@ export const ticketStyles = StyleSheet.create({
   header: {
     backgroundColor: colors.carbon,
     paddingHorizontal: 36,
-    paddingVertical: 26,
+    paddingVertical: 22,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -84,7 +84,7 @@ export const ticketStyles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: colors.creamLine,
-    paddingVertical: 8,
+    paddingVertical: 6.5,
   },
   rowLabel: {
     width: 150,
@@ -100,7 +100,7 @@ export const ticketStyles = StyleSheet.create({
     fontSize: 10,
   },
   sectionTitle: {
-    marginTop: 18,
+    marginTop: 14,
     marginBottom: 4,
     color: colors.gold,
     fontFamily: "Helvetica-Bold",
@@ -109,7 +109,7 @@ export const ticketStyles = StyleSheet.create({
     textTransform: "uppercase",
   },
   priceBlock: {
-    marginTop: 20,
+    marginTop: 14,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
@@ -126,8 +126,40 @@ export const ticketStyles = StyleSheet.create({
     fontSize: 22,
     marginTop: 4,
   },
+  notes: {
+    color: colors.ink,
+    fontSize: 9.5,
+    lineHeight: 1.4,
+    paddingVertical: 4,
+  },
+  paymentRows: {
+    marginTop: 8,
+    width: 230,
+  },
+  paymentRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.creamLine,
+  },
+  paymentLabel: {
+    color: colors.inkDim,
+    fontSize: 8,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  paymentValue: {
+    color: colors.ink,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 9.5,
+  },
+  pills: {
+    flexDirection: "row",
+    gap: 6,
+  },
   statusPill: {
-    marginTop: 6,
+    marginTop: 8,
     alignSelf: "flex-start",
     borderRadius: 12,
     paddingHorizontal: 10,
@@ -144,13 +176,13 @@ export const ticketStyles = StyleSheet.create({
     height: 78,
   },
   thankYou: {
-    marginTop: 14,
+    marginTop: 10,
     color: colors.inkDim,
     fontFamily: "Helvetica-Oblique",
     fontSize: 11,
   },
   footer: {
-    marginTop: 26,
+    marginTop: 18,
     marginHorizontal: 36,
     paddingTop: 16,
     borderTopWidth: 1,

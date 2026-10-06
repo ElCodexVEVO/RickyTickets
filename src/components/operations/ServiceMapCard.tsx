@@ -126,17 +126,9 @@ export function ServiceMapCard({
     ["Pasajeros", `${r.passengers} personas`],
     ["Vuelo", service.flight || "Sin vuelo registrado"],
     [
-      "Conductor",
-      r.driver?.full_name ??
-        (r.driver_id ? "Conductor asignado" : "Sin conductor"),
-    ],
-    [
-      "Vehículo",
-      r.vehicle
-        ? `${r.vehicle.brand} ${r.vehicle.model} · ${r.vehicle.plate}`
-        : r.vehicle_id
-          ? "Vehículo asignado"
-          : "Sin vehículo",
+      "Hotel",
+      [r.hotel, r.room && `Hab. ${r.room}`].filter(Boolean).join(" · ") ||
+        "Sin hotel",
     ],
   ];
   return (
@@ -187,19 +179,6 @@ export function ServiceMapCard({
           Ubicación pendiente
         </p>
       )}
-      {service.warnings.length > 0 && (
-        <div className="operations-warnings">
-          <strong>Revisar asignación</strong>
-          <ul>
-            {service.warnings.map((w) => (
-              <li key={w}>{w}</li>
-            ))}
-          </ul>
-          <p>
-            La proximidad de horarios requiere revisión; no confirma un retraso.
-          </p>
-        </div>
-      )}
       <div className="operations-detail-actions">
         <Link to={`/reservaciones/${r.id}`}>
           <ArrowUpRight size={14} />
@@ -207,7 +186,7 @@ export function ServiceMapCard({
         </Link>
         {canEditReservations && (
           <>
-            <Link to={`/reservaciones/${r.id}?edit=1`}>
+            <Link to={`/reservaciones/${r.id}/editar`}>
               <Pencil size={13} />
               Editar
             </Link>

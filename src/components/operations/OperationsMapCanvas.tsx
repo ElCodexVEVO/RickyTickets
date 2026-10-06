@@ -87,9 +87,7 @@ export function OperationsMapCanvas({
         {located.map((s) => {
           const g = geography[s.key];
           const active = s.key === selectedKey || s.key === highlightedKey;
-          const color = s.warnings.length
-            ? "#f18181"
-            : serviceMapState(s).color;
+          const color = serviceMapState(s).color;
           return (
             <g key={s.key} data-highlighted={active}>
               {validRoute(g.route) && (

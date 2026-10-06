@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Volaris",
+    "iata": "Y4",
+    "aliases": ["volaris"],
+    "filename": "volaris.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Volaris-logo.svg"
+  },
+  {
+    "name": "Viva",
+    "iata": "VB",
+    "aliases": ["viva", "viva aerobus", "vivaaerobus"],
+    "filename": "viva.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Viva_Logo.svg"
+  },
+  {
+    "name": "Aeroméxico",
+    "iata": "AM",
+    "aliases": ["aeromexico", "aeroméxico"],
+    "filename": "aeromexico.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Aerom%C3%A9xico_wordmark.svg"
+  },
+  {
+    "name": "American Airlines",
+    "iata": "AA",
+    "aliases": ["american", "american airlines"],
+    "filename": "american-airlines.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:American_Airlines_wordmark_(2013).svg"
+  },
+  {
+    "name": "United Airlines",
+    "iata": "UA",
+    "aliases": ["united", "united airlines"],
+    "filename": "united-airlines.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:United_Airlines_wordmark.svg"
+  },
+  {
+    "name": "Delta Air Lines",
+    "iata": "DL",
+    "aliases": ["delta", "delta air lines"],
+    "filename": "delta.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Delta_logo.svg"
+  },
+  {
+    "name": "Southwest Airlines",
+    "iata": "WN",
+    "aliases": ["southwest", "southwest airlines"],
+    "filename": "southwest.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Southwest_Airlines_logo_2014.svg"
+  },
+  {
+    "name": "Air Canada",
+    "iata": "AC",
+    "aliases": ["air canada"],
+    "filename": "air-canada.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Air_Canada_logo.svg"
+  }
+]

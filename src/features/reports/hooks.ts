@@ -57,6 +57,7 @@ export function useStatusBreakdown() {
         .is("deleted_at", null);
       if (error) throw error;
       const result: Record<ReservationStatus, number> = {
+        draft: 0,
         pending: 0,
         confirmed: 0,
         in_service: 0,
@@ -67,39 +68,6 @@ export function useStatusBreakdown() {
         result[row.status as ReservationStatus] += 1;
       }
       return result;
-    },
-    retry: 0,
-  });
-}
-
-export function useFleetUsage() {
-  return useQuery({
-    queryKey: ["reports", "fleet-usage"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reservations")
-        .select("vehicle_id, vehicle:vehicles(brand, model)")
-        .is("deleted_at", null)
-        .not("vehicle_id", "is", null);
-      if (error) throw error;
-
-      const counts = new Map<string, { label: string; count: number }>();
-      for (const row of data ?? []) {
-        const vehicle = row.vehicle as unknown as {
-          brand: string;
-          model: string;
-        } | null;
-        const label = vehicle
-          ? `${vehicle.brand} ${vehicle.model}`
-          : "Sin asignar";
-        const key = row.vehicle_id as string;
-        const existing = counts.get(key);
-        if (existing) existing.count += 1;
-        else counts.set(key, { label, count: 1 });
-      }
-      return Array.from(counts.values())
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
     },
     retry: 0,
   });

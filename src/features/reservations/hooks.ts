@@ -13,10 +13,12 @@ import {
   type ReservationFilters,
 } from "@/features/reservations/api";
 import type {
+  ReservationRow,
   ReservationStatus,
   ReservationWithRelations,
 } from "@/types/database.types";
 import { useCompanySettings } from "@/features/settings/hooks";
+import { useCatalogs } from "@/features/settings/catalogs";
 
 function invalidateReservationQueries(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -107,27 +109,41 @@ export function useUpdateReservationFields(id: string) {
   });
 }
 
-export function useTicketPdfUrl() {
+export interface TicketCustomer {
+  full_name: string;
+  phone: string | null;
+  email: string | null;
+}
+
+// Genera y guarda una nueva versión del PDF. Siempre regenera: el PDF debe
+// reflejar el estado y los datos actuales (precio, anticipo, estado), nunca una
+// versión cacheada de cuando se creó el ticket.
+export function useGenerateTicketPdf() {
   const settings = useCompanySettings();
+  const catalogs = useCatalogs();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (reservation: ReservationWithRelations) => {
-      if (!settings.data)
+    mutationFn: async ({
+      reservation,
+      customer,
+    }: {
+      reservation: ReservationRow;
+      customer: TicketCustomer;
+    }) => {
+      if (!settings.data || settings.isError || settings.isPlaceholderData)
         throw new Error(
-          "La configuración de la empresa aún no está disponible.",
+          "Espera a que cargue la configuración de tickets antes de generar el PDF.",
         );
+      if (reservation.status === "draft")
+        throw new Error("Un borrador no genera ticket. Complétalo primero.");
       const { generateAndStoreTicketPdf } =
         await import("@/pdf/generateTicketPdf");
-      // Siempre regenera: el PDF debe reflejar el estado y los datos actuales
-      // de la reservación (precio, estado, etc.), nunca una versión cacheada
-      // de cuando se creó el ticket.
       const { signedUrl } = await generateAndStoreTicketPdf({
         reservation,
-        customer: {
-          full_name: reservation.customer?.full_name ?? "Cliente",
-          phone: reservation.customer?.phone ?? null,
-          email: reservation.customer?.email ?? null,
-        },
+        customer,
+        serviceLabel: catalogs.data?.find(
+          (c) => c.id === reservation.service_catalog_item_id,
+        )?.label,
         companyInfo: settings.data.companyInfo,
         meetingPoints: settings.data.meetingPoints,
         ticketTerms: settings.data.ticketTerms,
@@ -135,12 +151,28 @@ export function useTicketPdfUrl() {
       if (!signedUrl) throw new Error("No se pudo generar la URL del PDF");
       return signedUrl;
     },
-    onSuccess: (_url, reservation) => {
+    onSuccess: (_url, { reservation }) => {
       queryClient.invalidateQueries({
         queryKey: ["reservations", "files", reservation.id],
       });
     },
   });
+}
+
+export function useTicketPdfUrl() {
+  const generate = useGenerateTicketPdf();
+  return {
+    ...generate,
+    mutateAsync: (reservation: ReservationWithRelations) =>
+      generate.mutateAsync({
+        reservation,
+        customer: {
+          full_name: reservation.customer?.full_name ?? "Cliente",
+          phone: reservation.customer?.phone ?? null,
+          email: reservation.customer?.email ?? null,
+        },
+      }),
+  };
 }
 
 export function useUpdateReservationStatus() {

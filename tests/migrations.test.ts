@@ -55,6 +55,8 @@ beforeAll(async () => {
     "0004_public_ticket_verification.sql",
     "0005_staff_security_and_activity.sql",
     "0006_reservation_service_catalog.sql",
+    "0007_reservation_locations.sql",
+    "0008_single_page_reservations.sql",
   ]) {
     const sql = (
       await readFile(
@@ -183,6 +185,131 @@ describe("Migraciones y operaciones en PostgreSQL aislado", () => {
         JSON.stringify(payload),
       ]),
     ).rejects.toThrow(/permission denied/);
+  });
+  it("crea borradores con anticipo y hora de vuelo sin vehículo ni conductor", async () => {
+    const result = await db.query<{
+      status: string;
+      deposit: string;
+      flight_time: string;
+      vehicle_id: string | null;
+      driver_id: string | null;
+      customer_id: string;
+    }>("select * from create_reservation($1::jsonb)", [
+      JSON.stringify({
+        ...payload,
+        customer_phone: "9990000001",
+        status: "draft",
+        deposit: 500,
+        flight_time: "09:15",
+        vehicle_id: "",
+        driver_id: "",
+      }),
+    ]);
+    const r = result.rows[0];
+    expect(r.status).toBe("draft");
+    expect(Number(r.deposit)).toBe(500);
+    expect(r.flight_time).toBe("09:15:00");
+    expect(r.vehicle_id).toBeNull();
+    expect(r.driver_id).toBeNull();
+    const stats = await db.query<{ total_services: number }>(
+      "select total_services from customers where id=$1",
+      [r.customer_id],
+    );
+    expect(stats.rows[0].total_services).toBe(0);
+  });
+  it("una reservación normal nace pendiente con anticipo 0 y cuenta como servicio", async () => {
+    const result = await db.query<{
+      id: string;
+      status: string;
+      deposit: string;
+      customer_id: string;
+    }>("select * from create_reservation($1::jsonb)", [
+      JSON.stringify({ ...payload, customer_phone: "9990000002" }),
+    ]);
+    expect(result.rows[0].status).toBe("pending");
+    expect(Number(result.rows[0].deposit)).toBe(0);
+    const stats = await db.query<{ total_services: number }>(
+      "select total_services from customers where id=$1",
+      [result.rows[0].customer_id],
+    );
+    expect(stats.rows[0].total_services).toBe(1);
+    await expect(
+      db.query("update reservations set deposit=-1 where id=$1", [
+        result.rows[0].id,
+      ]),
+    ).rejects.toThrow(/deposit/);
+  });
+  it("el autor sin permiso de edición continúa y completa su borrador, pero no otros", async () => {
+    const asService = () =>
+      db.exec(
+        "reset role; select set_config('request.jwt.claim.role','service_role',false);",
+      );
+    await asService();
+    await db.query("update profiles set permissions='{}' where id=$1", [
+      employee,
+    ]);
+    await asUser(employee);
+    const own = await db.query<{ id: string; customer_id: string }>(
+      "select * from create_reservation($1::jsonb)",
+      [
+        JSON.stringify({
+          ...payload,
+          customer_phone: "9990000003",
+          status: "draft",
+        }),
+      ],
+    );
+    const id = own.rows[0].id;
+    await db.query(
+      "update reservations set price=900, deposit=300 where id=$1",
+      [id],
+    );
+    await db.query("update reservations set status='pending' where id=$1", [
+      id,
+    ]);
+    const done = await db.query<{ status: string; price: string }>(
+      "select status, price from reservations where id=$1",
+      [id],
+    );
+    expect(done.rows[0]).toMatchObject({ status: "pending" });
+    expect(Number(done.rows[0].price)).toBe(900);
+    const stats = await db.query<{ total_services: number }>(
+      "select total_services from customers where id=$1",
+      [own.rows[0].customer_id],
+    );
+    expect(stats.rows[0].total_services).toBe(1);
+    // Ya no es borrador: sin permiso general no puede seguir editándola.
+    await db.query("update reservations set price=1 where id=$1", [id]);
+    const unchanged = await db.query<{ price: string }>(
+      "select price from reservations where id=$1",
+      [id],
+    );
+    expect(Number(unchanged.rows[0].price)).toBe(900);
+    await asService();
+    await db.query(
+      `update profiles set permissions='{"can_edit_reservations":true}' where id=$1`,
+      [employee],
+    );
+  });
+  it("el QR público no expone borradores", async () => {
+    const result = await db.query<{ id: string }>(
+      "select * from create_reservation($1::jsonb)",
+      [
+        JSON.stringify({
+          ...payload,
+          customer_phone: "9990000004",
+          status: "draft",
+        }),
+      ],
+    );
+    await asUser("", "anon");
+    expect(
+      (
+        await db.query("select * from get_public_ticket($1)", [
+          result.rows[0].id,
+        ])
+      ).rows,
+    ).toHaveLength(0);
   });
   it("soft delete oculta la reservación también al QR público", async () => {
     const r = await create();

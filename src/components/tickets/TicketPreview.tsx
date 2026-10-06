@@ -6,6 +6,7 @@ import { useCompanySettings } from "@/features/settings/hooks";
 import logoUrl from "@/assets/logo.png";
 import sceneryUrl from "@/assets/tulum-coast-v2.png";
 import { returnTimeLabel } from "@/lib/operations";
+import { paymentStatusLabels, paymentSummary } from "@/lib/payments";
 function Row({
   label,
   value,
@@ -30,6 +31,14 @@ export function TicketPreview({ data }: { data: TicketData }) {
   const { data: settings } = useCompanySettings();
   const companyInfo = settings?.companyInfo;
   const draft = data.folio === "Assigned when saved";
+  const payment =
+    data.deposit === undefined
+      ? undefined
+      : paymentSummary(data.price, data.deposit);
+  const money = (amount: number | null | undefined) =>
+    amount == null
+      ? "Por definir"
+      : `${formatCurrency(amount, data.currency)} ${data.currency}`;
   return (
     <div className="ticket-paper relative">
       <div
@@ -72,6 +81,9 @@ export function TicketPreview({ data }: { data: TicketData }) {
           label="Cliente"
           value={data.customerName === "Customer Name" ? "" : data.customerName}
         />
+        {data.serviceLabel && (
+          <Row label="Servicio" value={data.serviceLabel} />
+        )}
         <Row
           label="Ruta"
           value={[data.pickupPoint, data.dropoffPoint]
@@ -94,12 +106,21 @@ export function TicketPreview({ data }: { data: TicketData }) {
             value={[data.airline, data.flightNumber].filter(Boolean).join(" ")}
           />
         </div>
+        {(data.flightDate || data.flightTime) && (
+          <Row
+            label="Fecha / hora del vuelo"
+            value={[
+              data.flightDate && formatTicketDate(data.flightDate),
+              data.flightTime && formatTime(data.flightTime),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          />
+        )}
         <Row
           label="Contacto"
           value={[data.phone, data.email].filter(Boolean).join(" · ")}
         />
-        <Row label="Vehículo" value={data.vehicleName ?? "Por asignar"} />
-        <Row label="Conductor" value={data.driverName ?? "Por asignar"} />
         {data.serviceType === "redondo" && (
           <div className="mt-3">
             <p className="text-[10px] font-semibold text-[#967121]">
@@ -131,14 +152,29 @@ export function TicketPreview({ data }: { data: TicketData }) {
             )}
           </div>
         )}
-        <div className="flex items-center justify-between gap-2 py-4">
+        {data.notes && <Row label="Notas" value={data.notes} />}
+        <div className="flex items-center justify-between gap-2 pb-2 pt-4">
           <span className="paper-muted text-[10px]">Total</span>
-          <strong className="text-lg">
-            {data.price != null
-              ? `${formatCurrency(data.price, data.currency)} ${data.currency}`
-              : "Por definir"}
-          </strong>
+          <strong className="text-lg">{money(data.price)}</strong>
         </div>
+        {payment && (
+          <div className="paper-rule mb-3 space-y-1 border-t pt-2 text-[10px]">
+            <p className="flex justify-between">
+              <span className="paper-muted">Anticipo</span>
+              <span className="paper-value">{money(payment.deposit)}</span>
+            </p>
+            <p className="flex justify-between">
+              <span className="paper-muted">Restante</span>
+              <span className="paper-value">{money(payment.remaining)}</span>
+            </p>
+            <p className="flex justify-between">
+              <span className="paper-muted">Estado de pago</span>
+              <span className="paper-value font-semibold">
+                {paymentStatusLabels[payment.status]}
+              </span>
+            </p>
+          </div>
+        )}
         <details className="paper-rule paper-muted border-t pb-3 pt-2 text-[9px] leading-relaxed">
           <summary className="cursor-pointer font-medium">
             Puntos de encuentro

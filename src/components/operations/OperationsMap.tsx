@@ -8,11 +8,7 @@ import {
   type MapFilters,
   type OperationsGeography,
 } from "@/lib/operationsMap";
-import type {
-  DriverRow,
-  ReservationWithRelations,
-  VehicleRow,
-} from "@/types/database.types";
+import type { ReservationWithRelations } from "@/types/database.types";
 import { OperationsMapFilters } from "./OperationsMapFilters";
 import { OperationsMapCanvas } from "./OperationsMapCanvas";
 import { ActiveServicesList } from "./ActiveServicesList";
@@ -27,8 +23,6 @@ export interface ServiceFocusRequest {
 const noGeography: OperationsGeography = {};
 export function OperationsMap({
   reservations,
-  vehicles,
-  drivers,
   focusRequest,
   geography = noGeography,
   loading = false,
@@ -36,8 +30,6 @@ export function OperationsMap({
   now: fixedNow,
 }: {
   reservations: ReservationWithRelations[];
-  vehicles: VehicleRow[];
-  drivers: DriverRow[];
   focusRequest?: ServiceFocusRequest;
   geography?: OperationsGeography;
   loading?: boolean;
@@ -58,8 +50,8 @@ export function OperationsMap({
   const [mapExpanded, setMapExpanded] = useState(false);
   const host = useRef<HTMLElement>(null);
   const services = useMemo(
-    () => operationsServices(reservations, vehicles, drivers),
-    [reservations, vehicles, drivers],
+    () => operationsServices(reservations),
+    [reservations],
   );
   const focusedService = services.find((s) => s.key === focusRequest?.legKey);
   const focusDate = focusedService?.date;
@@ -164,16 +156,12 @@ export function OperationsMap({
                   Programado
                 </span>
                 <span>
-                  <i className="unassigned" />
-                  Por asignar
+                  <i className="pending" />
+                  Por confirmar
                 </span>
                 <span>
                   <i className="in-service" />
                   En servicio
-                </span>
-                <span>
-                  <i className="conflict" />
-                  Revisar
                 </span>
                 <span>
                   <i className="completed" />
@@ -218,7 +206,7 @@ export function OperationsMap({
           </div>
           <p className="operations-map-footer">
             <Route size={13} />
-            Ruta y asignación de la reservación · Sin seguimiento en vivo
+            Ruta y estado de la reservación · Sin seguimiento en vivo
           </p>
         </>
       )}

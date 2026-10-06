@@ -17,10 +17,9 @@ const ReservationsPage = lazy(() => import("@/pages/ReservationsPage"));
 const ReservationDetailPage = lazy(
   () => import("@/pages/ReservationDetailPage"),
 );
+const EditReservationPage = lazy(() => import("@/pages/EditReservationPage"));
 const CustomersPage = lazy(() => import("@/pages/CustomersPage"));
 const CustomerDetailPage = lazy(() => import("@/pages/CustomerDetailPage"));
-const VehiclesPage = lazy(() => import("@/pages/VehiclesPage"));
-const DriversPage = lazy(() => import("@/pages/DriversPage"));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
 const UsersPage = lazy(() => import("@/pages/UsersPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
@@ -44,10 +43,12 @@ export function AppRouter() {
               path="reservaciones/:id"
               element={<ReservationDetailPage />}
             />
+            <Route
+              path="reservaciones/:id/editar"
+              element={<EditReservationPage />}
+            />
             <Route path="clientes" element={<CustomersPage />} />
             <Route path="clientes/:id" element={<CustomerDetailPage />} />
-            <Route path="vehiculos" element={<VehiclesPage />} />
-            <Route path="conductores" element={<DriversPage />} />
 
             <Route element={<AdminRoute />}>
               <Route path="actividad" element={<ActivityPage />} />

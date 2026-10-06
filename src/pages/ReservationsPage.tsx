@@ -16,10 +16,13 @@ import { AgendaView } from "@/components/operations/AgendaView";
 import { DispatchBoard } from "@/components/operations/DispatchBoard";
 import { Badge } from "@/components/ui/Badge";
 import { QueryState } from "@/components/ui/QueryState";
+import { PaymentStatusBadge } from "@/components/tickets/PaymentStatusBadge";
 import { returnTimeLabel } from "@/lib/operations";
+import { paymentSummary } from "@/lib/payments";
 
 const STATUS_OPTIONS: { value: ReservationStatus | "all"; label: string }[] = [
   { value: "all", label: "Todos los estados" },
+  { value: "draft", label: "Borrador" },
   { value: "pending", label: "Pendiente" },
   { value: "confirmed", label: "Confirmado" },
   { value: "in_service", label: "En servicio" },
@@ -91,7 +94,11 @@ export default function ReservationsPage() {
         <AgendaView reservations={reservations ?? []} />
       )}
       {view === "operations" && !isLoading && !isError && (
-        <DispatchBoard reservations={reservations ?? []} />
+        <DispatchBoard
+          reservations={(reservations ?? []).filter(
+            (r) => r.status !== "draft",
+          )}
+        />
       )}
 
       {(view === "table" || isError) && (
@@ -125,8 +132,6 @@ export default function ReservationsPage() {
                     <th className="px-4 py-3">Ruta</th>
                     <th className="px-4 py-3">Personas</th>
                     <th className="px-4 py-3">Vuelo</th>
-                    <th className="px-4 py-3">Vehículo</th>
-                    <th className="px-4 py-3">Conductor</th>
                     <th className="px-4 py-3">Precio</th>
                     <th className="px-4 py-3">Pago</th>
                     <th className="px-4 py-3">Estado</th>
@@ -179,22 +184,22 @@ export default function ReservationsPage() {
                       <td className="px-4 py-3 whitespace-nowrap text-ink-500">
                         {r.flight_number ?? "—"}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-ink-500">
-                        {r.vehicle
-                          ? `${r.vehicle.brand} ${r.vehicle.model}`
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs text-ink-500">
-                        {r.driver?.full_name ?? "Sin conductor"}
-                      </td>
                       <td className="px-4 py-3 whitespace-nowrap font-medium">
                         {r.price != null
                           ? formatCurrency(r.price, r.currency)
                           : "—"}
                       </td>
                       <td className="px-4 py-3 text-xs text-ink-500">
-                        {r.payment_method ?? "Sin método"}
-                        <p className="mt-1 text-[10px]">Cobro sin registro</p>
+                        {r.deposit == null ? (
+                          <span className="text-[11px]">Sin registro</span>
+                        ) : (
+                          <PaymentStatusBadge
+                            status={paymentSummary(r.price, r.deposit).status}
+                          />
+                        )}
+                        <p className="mt-1 text-[10px]">
+                          {r.payment_method ?? "Sin método"}
+                        </p>
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={r.status} />

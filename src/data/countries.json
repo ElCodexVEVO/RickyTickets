@@ -1,0 +1,68 @@
+[
+  {
+    "country": "México",
+    "iso": "MX",
+    "dial": "+52",
+    "emoji": "🇲🇽"
+  },
+  {
+    "country": "Estados Unidos",
+    "iso": "US",
+    "dial": "+1",
+    "emoji": "🇺🇸"
+  },
+  {
+    "country": "Canadá",
+    "iso": "CA",
+    "dial": "+1",
+    "emoji": "🇨🇦"
+  },
+  {
+    "country": "España",
+    "iso": "ES",
+    "dial": "+34",
+    "emoji": "🇪🇸"
+  },
+  {
+    "country": "Reino Unido",
+    "iso": "GB",
+    "dial": "+44",
+    "emoji": "🇬🇧"
+  },
+  {
+    "country": "Francia",
+    "iso": "FR",
+    "dial": "+33",
+    "emoji": "🇫🇷"
+  },
+  {
+    "country": "Alemania",
+    "iso": "DE",
+    "dial": "+49",
+    "emoji": "🇩🇪"
+  },
+  {
+    "country": "Italia",
+    "iso": "IT",
+    "dial": "+39",
+    "emoji": "🇮🇹"
+  },
+  {
+    "country": "Colombia",
+    "iso": "CO",
+    "dial": "+57",
+    "emoji": "🇨🇴"
+  },
+  {
+    "country": "Argentina",
+    "iso": "AR",
+    "dial": "+54",
+    "emoji": "🇦🇷"
+  },
+  {
+    "country": "Brasil",
+    "iso": "BR",
+    "dial": "+55",
+    "emoji": "🇧🇷"
+  }
+]

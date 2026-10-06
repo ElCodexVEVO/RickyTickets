@@ -2,24 +2,22 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   CalendarCheck,
+  CalendarClock,
   Clock,
-  UserRound,
-  Wrench,
+  Hourglass,
   Sun,
   Moon,
   AlertTriangle,
   BarChart3,
   Route,
   CircleCheck,
-  Car,
+  FilePenLine,
   Users,
   Bell,
   ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useReservations } from "@/features/reservations/hooks";
-import { useVehicles } from "@/features/vehicles/hooks";
-import { useDrivers } from "@/features/drivers/hooks";
 import {
   operationDate,
   operationClock,
@@ -45,11 +43,8 @@ import type { CurrencyCode } from "@/types/database.types";
 export default function DashboardPage() {
   const { profile } = useAuth();
   const reservations = useReservations({});
-  const vehicles = useVehicles();
-  const drivers = useDrivers();
   const [mapFocus, setMapFocus] = useState<ServiceFocusRequest>();
   const [currency, setCurrency] = useState<CurrencyCode>("MXN");
-  const [teamTab, setTeamTab] = useState<"drivers" | "vehicles">("drivers");
   const revenue = useRevenueTrend(currency);
   const today = operationDate();
   const clock = operationClock();
@@ -64,15 +59,28 @@ export default function DashboardPage() {
       l.time.slice(0, 5) >= clock &&
       !["completed", "in_service"].includes(l.reservation.status),
   );
-  const alerts = operationAlerts(all, vehicles.data ?? [], drivers.data ?? []);
-  const rows = all.filter((r) => r.date === today || r.return_date === today);
+  const alerts = operationAlerts(all);
+  const rows = all.filter(
+    (r) =>
+      r.status !== "draft" && (r.date === today || r.return_date === today),
+  );
+  const drafts = all.filter((r) => r.status === "draft");
+  const returnsPending = mapLegs.filter(
+    (l) =>
+      l.direction === "Regreso" &&
+      !l.time &&
+      l.date >= today &&
+      !["cancelled", "completed"].includes(l.reservation.status),
+  );
   const busy = reservations.isPending;
-  const error = reservations.error || vehicles.error || drivers.error;
+  const error = reservations.error;
   const hour = Number(clock.slice(0, 2));
   const greeting =
     hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
   const period = all.filter(
-    (r) => r.date.slice(0, 7) === today.slice(0, 7) && r.status !== "cancelled",
+    (r) =>
+      r.date.slice(0, 7) === today.slice(0, 7) &&
+      !["cancelled", "draft"].includes(r.status),
   );
   const routeCounts = new Map<string, number>();
   period.forEach((r) => {
@@ -117,14 +125,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      <QueryState
-        error={error}
-        retry={() => {
-          void reservations.refetch();
-          void vehicles.refetch();
-          void drivers.refetch();
-        }}
-      />
+      <QueryState error={error} retry={() => void reservations.refetch()} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           icon={CalendarCheck}
@@ -140,34 +141,23 @@ export default function DashboardPage() {
           hint="Con hora confirmada"
         />
         <StatCard
-          icon={UserRound}
+          icon={Hourglass}
           tone="danger"
-          label="Sin conductor"
+          label="Por confirmar"
           value={
             busy || error
               ? "—"
               : String(
-                  legs.filter(
-                    (l) =>
-                      !l.reservation.driver_id &&
-                      l.reservation.status !== "completed",
-                  ).length,
+                  legs.filter((l) => l.reservation.status === "pending").length,
                 )
           }
-          hint="Requieren asignación"
+          hint="Servicios de hoy pendientes"
         />
         <StatCard
-          icon={Wrench}
-          label="En mantenimiento"
-          value={
-            vehicles.isPending || error
-              ? "—"
-              : String(
-                  vehicles.data?.filter((v) => v.status === "maintenance")
-                    .length ?? 0,
-                )
-          }
-          hint="Vehículos fuera de operación"
+          icon={CalendarClock}
+          label="Regresos por determinar"
+          value={busy || error ? "—" : String(returnsPending.length)}
+          hint="Desde hoy, sin hora confirmada"
         />
       </div>
       <div className="dashboard-layout">
@@ -181,7 +171,7 @@ export default function DashboardPage() {
                     Operación de hoy
                   </h2>
                   <p className="mt-1 pl-[26px] text-xs text-ink-500">
-                    Servicios y asignaciones del día
+                    Servicios de ida y regreso del día
                   </p>
                 </div>
                 <Link to="/agenda">
@@ -241,8 +231,6 @@ export default function DashboardPage() {
           </div>
           <OperationsMap
             reservations={all}
-            vehicles={vehicles.data ?? []}
-            drivers={drivers.data ?? []}
             focusRequest={mapFocus}
             loading={busy}
             error={error}
@@ -255,7 +243,7 @@ export default function DashboardPage() {
                   Tablero de despacho
                 </h2>
                 <p className="mt-1 pl-[26px] text-xs text-ink-500">
-                  Asigna el equipo y actualiza el estado de los servicios
+                  Actualiza el estado de los servicios del día
                 </p>
               </div>
               <Link to="/reservaciones">Ver todos →</Link>
@@ -334,82 +322,40 @@ export default function DashboardPage() {
           </Card>
           <Card className="overflow-hidden">
             <div className="panel-heading">
-              <h2 className="text-xs!">Conductores y vehículos</h2>
-              <Link to={teamTab === "drivers" ? "/conductores" : "/vehiculos"}>
-                Ver todos →
-              </Link>
+              <h2>
+                <FilePenLine size={16} className="text-gold-400" />
+                Borradores
+              </h2>
+              <span className="rounded-full bg-carbon-700 px-2 py-0.5 text-[11px] text-ink-700">
+                {busy || error ? "—" : drafts.length}
+              </span>
             </div>
-            <div className="p-3">
-              <div className="mb-3 grid grid-cols-2 rounded-md border border-line bg-carbon-950 p-0.5">
-                <button
-                  onClick={() => setTeamTab("drivers")}
-                  className={`rounded px-1 py-1.5 text-xs ${teamTab === "drivers" ? "bg-gold-400 text-carbon-950" : "text-ink-500"}`}
+            <div className="max-h-[230px] overflow-y-auto px-3">
+              {drafts.slice(0, 6).map((r) => (
+                <Link
+                  key={r.id}
+                  to={`/reservaciones/${r.id}/editar`}
+                  className="block border-b border-line py-2.5 last:border-0 hover:bg-carbon-800/40"
                 >
-                  Conductores ({drivers.data?.length ?? "—"})
-                </button>
-                <button
-                  onClick={() => setTeamTab("vehicles")}
-                  className={`rounded px-1 py-1.5 text-xs ${teamTab === "vehicles" ? "bg-gold-400 text-carbon-950" : "text-ink-500"}`}
-                >
-                  Vehículos ({vehicles.data?.length ?? "—"})
-                </button>
-              </div>
-              <QueryState
-                loading={drivers.isPending || vehicles.isPending}
-                error={drivers.error || vehicles.error}
-              />
-              {teamTab === "drivers"
-                ? drivers.data?.slice(0, 4).map((d) => (
-                    <div
-                      key={d.id}
-                      className="flex items-center gap-2 border-b border-line py-2 last:border-0"
-                    >
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-carbon-700 text-xs text-gold-300">
-                        {d.full_name.slice(0, 1)}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-[13px]">{d.full_name}</p>
-                        <p className="truncate text-[11px] text-ink-500">
-                          {vehicles.data?.find((v) => v.id === d.vehicle_id)
-                            ?.model ?? "Sin vehículo asignado"}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                : vehicles.data?.slice(0, 4).map((v) => (
-                    <div
-                      key={v.id}
-                      className="flex items-center gap-2 border-b border-line py-2 last:border-0"
-                    >
-                      <Car size={21} className="text-gold-400" />
-                      <div>
-                        <p className="text-[13px]">
-                          {v.brand} {v.model}
-                        </p>
-                        <p className="text-[11px] text-ink-500">{v.plate}</p>
-                      </div>
-                    </div>
-                  ))}
-              {!drivers.isPending &&
-                !vehicles.isPending &&
-                !(teamTab === "drivers"
-                  ? drivers.data?.length
-                  : vehicles.data?.length) && (
-                  <div className="py-2 text-center">
-                    <UserRound size={24} className="mx-auto text-ink-500" />
-                    <p className="mt-2 text-[13px] text-ink-500">
-                      {teamTab === "drivers"
-                        ? "Sin conductores registrados"
-                        : "Sin vehículos registrados"}
-                    </p>
-                    <Link
-                      className="mt-2 inline-block text-xs text-gold-400"
-                      to={teamTab === "drivers" ? "/conductores" : "/vehiculos"}
-                    >
-                      Agregar al directorio →
-                    </Link>
-                  </div>
-                )}
+                  <p className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-mono-tab text-gold-300">
+                      {r.folio}
+                    </span>
+                    <span className="text-ink-500">{formatDate(r.date)}</span>
+                  </p>
+                  <p className="mt-1 truncate text-[13px]">
+                    {r.customer?.full_name ?? "Cliente"}
+                  </p>
+                  <p className="truncate text-[11px] text-ink-500">
+                    {r.pickup_point} → {r.dropoff_point}
+                  </p>
+                </Link>
+              ))}
+              {!busy && !error && !drafts.length && (
+                <p className="py-6 text-xs text-ink-500">
+                  Sin borradores pendientes.
+                </p>
+              )}
             </div>
           </Card>
         </div>

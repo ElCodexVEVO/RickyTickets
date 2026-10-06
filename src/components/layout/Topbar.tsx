@@ -1,37 +1,24 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Bell, CircleHelp, Menu, Plus, Search, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useReservations } from "@/features/reservations/hooks";
-import { useVehicles } from "@/features/vehicles/hooks";
-import { useDrivers } from "@/features/drivers/hooks";
 import { useCustomers } from "@/features/customers/hooks";
 import { operationAlerts } from "@/lib/operations";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { QueryState } from "@/components/ui/QueryState";
-export function Topbar({
-  onMenuClick,
-  onCreate,
-}: {
-  onMenuClick: () => void;
-  onCreate: () => void;
-}) {
+export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { profile, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [panel, setPanel] = useState<
     "help" | "notifications" | "profile" | null
   >(null);
   const reservations = useReservations({});
-  const vehicles = useVehicles();
-  const drivers = useDrivers();
   const customers = useCustomers();
-  const alerts = operationAlerts(
-    reservations.data ?? [],
-    vehicles.data ?? [],
-    drivers.data ?? [],
-  );
+  const alerts = operationAlerts(reservations.data ?? []);
   const term = search.trim().toLowerCase();
   const matches = (values: (string | null | undefined)[]) =>
     values.some((v) => v?.toLowerCase().includes(term));
@@ -47,16 +34,13 @@ export function Topbar({
                 r.customer?.phone,
                 r.flight_number,
                 r.return_flight_number,
-                r.driver?.full_name,
-                r.vehicle?.plate,
-                r.vehicle?.brand,
-                r.vehicle?.model,
+                r.hotel,
               ]),
             )
             .map((r) => ({
               key: r.id,
               to: `/reservaciones/${r.id}`,
-              label: r.folio,
+              label: r.status === "draft" ? `${r.folio} · Borrador` : r.folio,
               description: `${r.customer?.full_name ?? "Cliente"} · ${r.pickup_point} → ${r.dropoff_point}`,
             })),
           ...(customers.data ?? [])
@@ -66,22 +50,6 @@ export function Topbar({
               to: `/clientes/${c.id}`,
               label: c.full_name,
               description: `Cliente · ${c.phone ?? "Sin teléfono"}`,
-            })),
-          ...(drivers.data ?? [])
-            .filter((d) => matches([d.full_name, d.phone]))
-            .map((d) => ({
-              key: d.id,
-              to: "/conductores",
-              label: d.full_name,
-              description: "Conductor",
-            })),
-          ...(vehicles.data ?? [])
-            .filter((v) => matches([v.brand, v.model, v.plate]))
-            .map((v) => ({
-              key: v.id,
-              to: "/vehiculos",
-              label: `${v.brand} ${v.model}`,
-              description: `Vehículo · ${v.plate}`,
             })),
         ].slice(0, 12);
   return (
@@ -106,7 +74,7 @@ export function Topbar({
             onKeyDown={(e) => {
               if (e.key === "Escape") setSearch("");
             }}
-            placeholder="Buscar reservación, cliente, vuelo, folio, conductor o vehículo..."
+            placeholder="Buscar reservación, cliente, vuelo, folio u hotel..."
             className="h-9 bg-carbon-900 pl-9 pr-8 text-xs"
           />
           {search && (
@@ -146,7 +114,10 @@ export function Topbar({
             </div>
           )}
         </div>
-        <Button onClick={onCreate} className="h-9 shrink-0">
+        <Button
+          onClick={() => navigate("/ticket/nuevo")}
+          className="h-9 shrink-0"
+        >
           <Plus size={16} />
           <span className="hidden xl:inline">Nueva reservación</span>
           <span className="xl:hidden">Nueva</span>
@@ -205,16 +176,17 @@ export function Topbar({
         {panel === "help" && (
           <div className="space-y-3 text-sm text-ink-700">
             <p>
-              Crea una reservación en seis pasos. El folio se asigna al guardar
-              y el PDF puede regenerarse desde su detalle.
+              Crea una reservación en una sola pantalla: cliente, ruta, vuelo,
+              hotel y pago, con el resumen siempre visible. El folio se asigna
+              al guardar y el PDF puede regenerarse desde su detalle.
+            </p>
+            <p>
+              «Guardar borrador» conserva la reservación sin generar ticket;
+              continúala desde Reservaciones cuando tengas los datos.
             </p>
             <p>
               Para un regreso sin hora, activa «Por determinar». Podrás
-              confirmarla después desde Reservaciones.
-            </p>
-            <p>
-              Las advertencias de asignación revisan servicios cercanos. Revisa
-              los tiempos reales de traslado antes de despachar.
+              confirmarla después editando la reservación.
             </p>
             <p>
               Agenda muestra los trayectos de ida y regreso; los regresos

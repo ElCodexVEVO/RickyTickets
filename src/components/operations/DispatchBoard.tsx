@@ -7,21 +7,37 @@ import type {
   ReservationStatus,
   ReservationWithRelations,
 } from "@/types/database.types";
-const columns = [
-  { key: "unassigned", label: "Sin asignar", tone: "border-danger-500/30" },
-  { key: "preparing", label: "Preparando", tone: "border-gold-500/30" },
-  { key: "service", label: "En servicio", tone: "border-positive-500/30" },
-  { key: "completed", label: "Completados", tone: "border-line" },
+const columns: {
+  key: ReservationStatus;
+  label: string;
+  tone: string;
+  heading: string;
+}[] = [
+  {
+    key: "pending",
+    label: "Por confirmar",
+    tone: "border-gold-500/30",
+    heading: "text-gold-400",
+  },
+  {
+    key: "confirmed",
+    label: "Confirmados",
+    tone: "border-sky-400/30",
+    heading: "text-sky-300",
+  },
+  {
+    key: "in_service",
+    label: "En servicio",
+    tone: "border-positive-500/30",
+    heading: "text-positive-700",
+  },
+  {
+    key: "completed",
+    label: "Completados",
+    tone: "border-line",
+    heading: "text-ink-700",
+  },
 ];
-function column(r: ReservationWithRelations) {
-  return r.status === "completed"
-    ? "completed"
-    : r.status === "in_service"
-      ? "service"
-      : !r.driver_id || !r.vehicle_id
-        ? "unassigned"
-        : "preparing";
-}
 export function DispatchBoard({
   reservations,
   compact = false,
@@ -36,17 +52,13 @@ export function DispatchBoard({
       <QueryState error={change.error} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {columns.map((c) => {
-          const rows = reservations.filter(
-            (r) => r.status !== "cancelled" && column(r) === c.key,
-          );
+          const rows = reservations.filter((r) => r.status === c.key);
           return (
             <section
               key={c.key}
               className={`min-w-0 rounded-lg border bg-carbon-900 ${compact ? "p-2" : "p-3"} ${c.tone}`}
             >
-              <h3
-                className={`mb-2 text-xs font-semibold ${c.key === "unassigned" ? "text-danger-500" : c.key === "preparing" ? "text-gold-400" : c.key === "service" ? "text-positive-700" : "text-ink-700"}`}
-              >
+              <h3 className={`mb-2 text-xs font-semibold ${c.heading}`}>
                 {c.label} <span className="text-ink-500">({rows.length})</span>
               </h3>
               <div
@@ -77,38 +89,25 @@ export function DispatchBoard({
                         Regreso · {returnTimeLabel(r.return_time)}
                       </p>
                     )}
-                    <details className="mt-1">
-                      <summary className="cursor-pointer text-[11px] text-ink-500">
-                        Asignación y estado
-                      </summary>
-                      <p className="mt-2 text-ink-500">
-                        {r.driver?.full_name ?? "Conductor por asignar"}
-                      </p>
-                      <p className="text-ink-500">
-                        {r.vehicle
-                          ? `${r.vehicle.model} · ${r.vehicle.plate}`
-                          : "Vehículo por asignar"}
-                      </p>
-                      {canEditReservations && (
-                        <select
-                          aria-label={`Estado de ${r.folio}`}
-                          value={r.status}
-                          disabled={change.isPending}
-                          onChange={(e) =>
-                            change.mutate({
-                              id: r.id,
-                              status: e.target.value as ReservationStatus,
-                            })
-                          }
-                          className="mt-3 w-full rounded-md border border-line bg-carbon-800 p-1.5 text-xs"
-                        >
-                          <option value="pending">Pendiente</option>
-                          <option value="confirmed">Confirmado</option>
-                          <option value="in_service">En servicio</option>
-                          <option value="completed">Completado</option>
-                        </select>
-                      )}
-                    </details>
+                    {canEditReservations && (
+                      <select
+                        aria-label={`Estado de ${r.folio}`}
+                        value={r.status}
+                        disabled={change.isPending}
+                        onChange={(e) =>
+                          change.mutate({
+                            id: r.id,
+                            status: e.target.value as ReservationStatus,
+                          })
+                        }
+                        className="mt-2 w-full rounded-md border border-line bg-carbon-800 p-1.5 text-xs"
+                      >
+                        <option value="pending">Pendiente</option>
+                        <option value="confirmed">Confirmado</option>
+                        <option value="in_service">En servicio</option>
+                        <option value="completed">Completado</option>
+                      </select>
+                    )}
                   </article>
                 ))}
                 {!rows.length && (
@@ -125,8 +124,8 @@ export function DispatchBoard({
       </div>
       {!compact && (
         <p className="mt-2 text-[11px] text-ink-500">
-          El estado y las asignaciones pertenecen a la reservación completa,
-          incluidos sus trayectos de regreso.
+          El estado pertenece a la reservación completa, incluidos sus trayectos
+          de regreso. Los borradores y cancelaciones no aparecen aquí.
         </p>
       )}
     </div>

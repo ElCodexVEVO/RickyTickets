@@ -129,9 +129,6 @@
   .panel-heading {
     line-height: 1.45;
   }
-  .composer-wizard p,
-  .composer-wizard label,
-  .composer-wizard span,
   .ticket-paper p {
     line-height: 1.45;
   }
@@ -151,29 +148,16 @@
   .dashboard-insights .space-y-2 {
     line-height: 1.35;
   }
-  .composer-wizard .wizard-form .customer-fields {
-    grid-template-columns: 1fr;
-  }
-  .standalone-wizard h1 {
+  /* Nueva reservación: misma escala compacta que tenía el formulario anterior. */
+  .reservation-editor h1 {
     font-size: 20px;
   }
-  .standalone-wizard .wizard-form-card {
-    padding: 18px;
-  }
-  .standalone-wizard .field-control {
+  .reservation-editor .field-control:not(textarea) {
     height: 36px;
     font-size: 13px;
   }
-  .standalone-wizard label {
+  .reservation-editor label {
     font-size: 12px;
-  }
-  .standalone-wizard .wizard-stepper {
-    width: calc(100% - 364px);
-  }
-  @media (max-width: 1279px) {
-    .standalone-wizard .wizard-stepper {
-      width: 100%;
-    }
   }
   .dashboard-hero {
     background-image:
@@ -238,132 +222,6 @@
       linear-gradient(90deg, #547a8420 1px, transparent 1px);
     background-size: 25px 25px;
   }
-  .composer-host[hidden] {
-    display: none;
-  }
-  .composer-host {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-  }
-  .composer-backdrop {
-    position: absolute;
-    inset: 0;
-    background: #090c0ebf;
-  }
-  .reservation-composer {
-    position: absolute;
-    inset: 0 0 0 auto;
-    width: min(100%, 390px);
-    background: var(--color-surface-950);
-    border-left: 1px solid var(--color-line);
-    overflow-y: auto;
-  }
-  .wizard-stepper {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    padding: 18px 0;
-  }
-  .wizard-stepper::before {
-    content: "";
-    position: absolute;
-    left: 8%;
-    right: 8%;
-    top: 32px;
-    height: 1px;
-    background: var(--color-carbon-600);
-  }
-  .wizard-stepper button {
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    align-items: center;
-    gap: 7px;
-    font-size: 10px;
-  }
-  .wizard-stepper button span {
-    display: grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    border: 1px solid var(--color-carbon-600);
-    border-radius: 50%;
-    background: var(--color-carbon-800);
-    color: var(--color-ink-700);
-  }
-  .wizard-stepper button[aria-current] {
-    color: var(--color-cream-50);
-    font-weight: 600;
-  }
-  .wizard-stepper button[aria-current] span {
-    color: #17150e;
-    background: var(--color-gold-400);
-    border-color: var(--color-gold-300);
-    box-shadow: 0 0 0 3px #d5ac501c;
-  }
-  .composer-wizard {
-    padding: 0 16px;
-  }
-  .composer-wizard .wizard-stepper {
-    margin-bottom: 6px;
-    border-bottom: 1px solid var(--color-line);
-  }
-  .composer-wizard .wizard-form-card {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-  .composer-wizard .wizard-form {
-    min-height: calc(100dvh - 151px);
-    display: flex;
-    flex-direction: column;
-  }
-  .composer-wizard .field-control {
-    height: 35px;
-    font-size: 12px;
-  }
-  .composer-wizard label {
-    font-size: 12px;
-  }
-  .composer-wizard .wizard-form > div:first-child {
-    padding-top: 12px;
-  }
-  .composer-wizard .wizard-form > div:first-child h2 {
-    font-size: 14px;
-    padding-bottom: 12px;
-  }
-  .composer-wizard .sm\:grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .composer-wizard .gap-4 {
-    gap: 12px;
-  }
-  .wizard-footer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 24px;
-    padding-top: 16px;
-    border-top: 1px solid var(--color-line);
-  }
-  .wizard-footer .wizard-next {
-    margin-left: auto;
-  }
-  .composer-wizard .wizard-footer {
-    position: sticky;
-    bottom: 0;
-    z-index: 2;
-    margin-top: auto;
-    padding: 14px 0;
-    background: var(--color-surface-950);
-  }
-  .composer-wizard .wizard-footer .wizard-next {
-    flex: 1;
-  }
   .ticket-paper {
     color-scheme: light;
     background: #f5edde;
@@ -381,26 +239,6 @@
   }
   .ticket-paper .paper-value {
     color: #24251f;
-  }
-  @media (min-width: 1600px) {
-    .app-shell.composer-open {
-      grid-template-columns: var(--sidebar-width) minmax(0, 1fr) 360px !important;
-    }
-    .composer-host {
-      position: sticky;
-      inset: auto;
-      top: 0;
-      height: 100dvh;
-      z-index: 35;
-    }
-    .composer-backdrop {
-      display: none;
-    }
-    .reservation-composer {
-      position: relative;
-      width: 100%;
-      height: 100%;
-    }
   }
   @container (min-width: 900px) {
     .dashboard-layout {

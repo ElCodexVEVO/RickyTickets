@@ -20,12 +20,14 @@ export interface GenerateTicketPdfResult {
 export async function generateAndStoreTicketPdf({
   reservation,
   customer,
+  serviceLabel,
   companyInfo,
   meetingPoints,
   ticketTerms,
 }: {
   reservation: ReservationRow;
   customer: { full_name: string; phone: string | null; email: string | null };
+  serviceLabel?: string;
   companyInfo: CompanyInfo;
   meetingPoints: MeetingPoints;
   ticketTerms: TicketTerms;
@@ -33,7 +35,7 @@ export async function generateAndStoreTicketPdf({
   const qrDataUrl = await generateTicketQrDataUrl(
     `${window.location.origin}/verificar/${reservation.id}`,
   );
-  const data = ticketDataFromReservation(reservation, customer);
+  const data = ticketDataFromReservation(reservation, customer, serviceLabel);
 
   const blob = await pdf(
     <TicketDocument

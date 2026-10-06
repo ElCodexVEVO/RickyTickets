@@ -39,6 +39,8 @@ export function ReservationActions({
   const { isAdmin } = useAuth();
   const ticketPdf = useTicketPdfUrl();
   const [confirmCancel, setConfirmCancel] = useState(false);
+  // Un borrador todavía no tiene ticket: se continúa desde el editor.
+  const draft = reservation.status === "draft";
 
   async function handlePdf(action: "download" | "whatsapp" | "view") {
     try {
@@ -70,20 +72,20 @@ export function ReservationActions({
       />
       <IconButton
         icon={Pencil}
-        label="Editar"
-        onClick={() => navigate(`/reservaciones/${reservation.id}?edit=1`)}
+        label={draft ? "Continuar borrador" : "Editar"}
+        onClick={() => navigate(`/reservaciones/${reservation.id}/editar`)}
       />
       <IconButton
         icon={Download}
-        label="Descargar PDF"
+        label={draft ? "Sin PDF: es un borrador" : "Descargar PDF"}
         onClick={() => handlePdf("download")}
-        disabled={ticketPdf.isPending}
+        disabled={draft || ticketPdf.isPending}
       />
       <IconButton
         icon={MessageCircle}
-        label="Compartir por WhatsApp"
+        label={draft ? "Sin ticket: es un borrador" : "Compartir por WhatsApp"}
         onClick={() => handlePdf("whatsapp")}
-        disabled={ticketPdf.isPending}
+        disabled={draft || ticketPdf.isPending}
       />
       <IconButton
         icon={Copy}

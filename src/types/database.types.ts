@@ -1,16 +1,14 @@
-// Tipos de la base de datos Supabase. Reflejan supabase/migrations/0001_init.sql.
+// Tipos de la base de datos Supabase. Reflejan supabase/migrations (0001 a 0008).
+// Las tablas vehicles/drivers y las columnas vehicle_id/driver_id siguen en la base
+// por historial, pero la aplicación ya no las consulta (ver 0008).
 // Cuando el proyecto real esté conectado, se pueden regenerar con:
 //   supabase gen types typescript --project-id <ref> > src/types/database.types.ts
 
 export type UserRole = "admin" | "employee";
 export type ServiceType = "sencillo" | "redondo";
 export type ReservationStatus =
-  "pending" | "confirmed" | "in_service" | "completed" | "cancelled";
+  "draft" | "pending" | "confirmed" | "in_service" | "completed" | "cancelled";
 export type CurrencyCode = "USD" | "MXN";
-export type VehicleType = "van" | "suv" | "sedan" | "sprinter";
-export type VehicleStatus =
-  "available" | "in_service" | "maintenance" | "inactive";
-export type DriverStatus = "available" | "on_service" | "off_duty" | "inactive";
 export type CatalogKind = "service_type" | "payment_method" | "location";
 
 export interface ProfileRow {
@@ -34,33 +32,6 @@ export interface CustomerRow {
   total_spent: number;
   last_service_at: string | null;
   notes: string | null;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-}
-
-export interface VehicleRow {
-  id: string;
-  brand: string;
-  model: string;
-  plate: string;
-  capacity: number;
-  type: VehicleType;
-  status: VehicleStatus;
-  photo_url: string | null;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-}
-
-export interface DriverRow {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  vehicle_id: string | null;
-  status: DriverStatus;
-  photo_url: string | null;
-  license_number: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -105,7 +76,10 @@ export interface ReservationRow extends ReservationLocationFields {
   airline: string | null;
   flight_number: string | null;
   flight_date: string | null;
+  // 0008. Opcional: no existe en bases sin esa migración.
+  flight_time?: string | null;
   return_date: string | null;
+  // NULL en un trayecto redondo significa «Por determinar».
   return_time: string | null;
   return_pickup_point: string | null;
   return_dropoff_point: string | null;
@@ -113,11 +87,11 @@ export interface ReservationRow extends ReservationLocationFields {
   return_flight_number: string | null;
   passengers: number;
   price: number | null;
+  // 0008. NULL = reservación anterior sin registro de anticipo.
+  deposit?: number | null;
   currency: CurrencyCode;
   payment_method: string | null;
   notes: string | null;
-  vehicle_id: string | null;
-  driver_id: string | null;
   status: ReservationStatus;
   created_by: string | null;
   created_at: string;
@@ -164,8 +138,6 @@ export interface ActivityLogRow {
 // Vista con joins usada por el listado de Reservaciones y el detalle.
 export interface ReservationWithRelations extends ReservationRow {
   customer: Pick<CustomerRow, "id" | "full_name" | "phone" | "email"> | null;
-  vehicle: Pick<VehicleRow, "id" | "brand" | "model" | "plate"> | null;
-  driver: Pick<DriverRow, "id" | "full_name" | "phone"> | null;
 }
 
 type Tables<Row, Insert, Update = Partial<Insert>> = {
@@ -186,14 +158,6 @@ export interface Database {
         Partial<Omit<CustomerRow, "id" | "created_at" | "updated_at">> & {
           full_name: string;
         }
-      >;
-      vehicles: Tables<
-        VehicleRow,
-        Omit<VehicleRow, "id" | "created_at" | "updated_at" | "deleted_at">
-      >;
-      drivers: Tables<
-        DriverRow,
-        Omit<DriverRow, "id" | "created_at" | "updated_at" | "deleted_at">
       >;
       service_catalog_items: Tables<
         ServiceCatalogItemRow,

@@ -2,12 +2,16 @@ import type {
   CurrencyCode,
   ReservationWithRelations,
 } from "@/types/database.types";
+import { isDraft } from "@/lib/operations";
+import { paymentStatusLabels, paymentSummary } from "@/lib/payments";
 export function reportSummary(
-  all: ReservationWithRelations[],
+  everything: ReservationWithRelations[],
   from: string,
   to: string,
   currency: CurrencyCode,
 ) {
+  // Los borradores no son reservaciones confirmadas: no cuentan en reportes.
+  const all = everything.filter((r) => !isDraft(r));
   const rows = all.filter(
     (r) => r.date >= from && r.date <= to && r.currency === currency,
   );
@@ -57,14 +61,17 @@ export function reportSummary(
       ...values,
     })).sort((a, b) => a.month.localeCompare(b.month)),
     routes: grouped((r) => `${r.pickup_point} → ${r.dropoff_point}`),
-    drivers: grouped((r) => r.driver?.full_name ?? "Sin asignar"),
-    vehicles: grouped((r) =>
-      r.vehicle
-        ? `${r.vehicle.brand} ${r.vehicle.model} · ${r.vehicle.plate}`
-        : "Sin asignar",
-    ),
     payments: grouped((r) => r.payment_method ?? "Sin definir"),
+    paymentStatus: grouped((r) => reservationPaymentLabel(r)),
   };
+}
+// Reservaciones anteriores a 0008 no tienen anticipo registrado.
+export function reservationPaymentLabel(
+  r: Pick<ReservationWithRelations, "price" | "deposit">,
+) {
+  return r.deposit == null
+    ? "Sin registro"
+    : paymentStatusLabels[paymentSummary(r.price, r.deposit).status];
 }
 export function csvCell(value: unknown) {
   let text = String(value ?? "");
@@ -82,29 +89,34 @@ export function reservationCsv(rows: ReservationWithRelations[]) {
         "Fecha",
         "Hora ida",
         "Hora regreso",
-        "Conductor",
-        "Vehículo",
         "Precio",
+        "Anticipo",
+        "Restante",
         "Moneda",
         "Método",
+        "Estado de pago",
         "Estado",
       ],
-      ...rows.map((r) => [
-        r.folio,
-        r.customer?.full_name,
-        `${r.pickup_point} → ${r.dropoff_point}`,
-        r.date,
-        r.time.slice(0, 5),
-        r.service_type === "redondo"
-          ? (r.return_time?.slice(0, 5) ?? "Por determinar")
-          : "Solo ida",
-        r.driver?.full_name,
-        r.vehicle?.plate,
-        r.price,
-        r.currency,
-        r.payment_method,
-        r.status,
-      ]),
+      ...rows.map((r) => {
+        const payment = paymentSummary(r.price, r.deposit);
+        return [
+          r.folio,
+          r.customer?.full_name,
+          `${r.pickup_point} → ${r.dropoff_point}`,
+          r.date,
+          r.time.slice(0, 5),
+          r.service_type === "redondo"
+            ? (r.return_time?.slice(0, 5) ?? "Por determinar")
+            : "Solo ida",
+          r.price,
+          r.deposit ?? "",
+          r.deposit == null ? "" : payment.remaining,
+          r.currency,
+          r.payment_method,
+          reservationPaymentLabel(r),
+          r.status,
+        ];
+      }),
     ]
       .map((row) => row.map(csvCell).join(","))
       .join("\r\n")
