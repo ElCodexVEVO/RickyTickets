@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { divIcon } from "leaflet";
+import { divIcon, type LatLngTuple } from "leaflet";
 import { Marker, Tooltip, Polyline } from "react-leaflet";
 import { serviceMapState, validGeoPoint, validRoute, type OperationsGeography, type OperationsService } from "@/lib/operationsMap";
 export function servicePointIcon(kind: "origin" | "destination", color: string, selected = false) {
@@ -10,7 +10,7 @@ function ServicePoints({ service, geography, selected, onSelect }: { service: Op
   const color = service.warnings.length ? "#f18181" : serviceMapState(service).color;
   const icons = useMemo(() => ({ origin: servicePointIcon("origin", color, selected), destination: servicePointIcon("destination", color, selected) }), [color, selected]);
   return <>
-    {validRoute(geography.route) && <Polyline positions={geography.route.coordinates.map(([lng, lat]) => [lat, lng])} pathOptions={{ color, weight: selected ? 4 : 2, opacity: selected ? 1 : 0.45 }} />}
+    {validRoute(geography.route) && <Polyline positions={geography.route.coordinates.map(([lng, lat]): LatLngTuple => [lat, lng])} pathOptions={{ color, weight: selected ? 4 : 2, opacity: selected ? 1 : 0.45 }} />}
     {(["origin", "destination"] as const).map(kind => {
       const p = geography[kind]; if (!validGeoPoint(p)) return null;
       const label = `${kind === "origin" ? "Origen" : "Destino"} de ${service.reservation.folio} · ${service.direction}`;
