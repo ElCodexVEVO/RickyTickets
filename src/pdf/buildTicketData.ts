@@ -20,7 +20,9 @@ export function ticketDataFromForm(values: ReservationFormValues): TicketData {
     flightNumber: values.flight_number || undefined,
     serviceType: values.service_type,
     returnDate: values.return_date || undefined,
-    returnTime: values.return_time || undefined,
+    returnTime: values.return_time_pending
+      ? undefined
+      : values.return_time || undefined,
     returnPickupPoint: values.return_pickup_point || undefined,
     returnDropoffPoint: values.return_dropoff_point || undefined,
     returnAirline: values.return_airline || undefined,

@@ -22,10 +22,12 @@ export function ReservationMiniList({
         <li key={r.id}>
           <Link
             to={`/reservaciones/${r.id}`}
-            className="flex items-center justify-between gap-3 py-3 transition-colors hover:bg-cream-50 -mx-2 px-2 rounded-lg"
+            className="flex items-center justify-between gap-3 py-3 transition-colors hover:bg-surface-950 -mx-2 px-2 rounded-lg"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-ink-900">{r.customer?.full_name ?? "Cliente"}</p>
+              <p className="truncate text-sm font-medium text-ink-900">
+                {r.customer?.full_name ?? "Cliente"}
+              </p>
               <p className="truncate text-xs text-ink-500">
                 {r.pickup_point} → {r.dropoff_point}
               </p>

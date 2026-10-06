@@ -134,3 +134,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+.vercel
+.env*
+
+# QA aislado y capturas locales (no contienen datos demo de producción)
+tmp/
+docs/capturas/

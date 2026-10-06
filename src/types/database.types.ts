@@ -4,10 +4,12 @@
 
 export type UserRole = "admin" | "employee";
 export type ServiceType = "sencillo" | "redondo";
-export type ReservationStatus = "pending" | "confirmed" | "in_service" | "completed" | "cancelled";
+export type ReservationStatus =
+  "pending" | "confirmed" | "in_service" | "completed" | "cancelled";
 export type CurrencyCode = "USD" | "MXN";
 export type VehicleType = "van" | "suv" | "sedan" | "sprinter";
-export type VehicleStatus = "available" | "in_service" | "maintenance" | "inactive";
+export type VehicleStatus =
+  "available" | "in_service" | "maintenance" | "inactive";
 export type DriverStatus = "available" | "on_service" | "off_duty" | "inactive";
 export type CatalogKind = "service_type" | "payment_method" | "location";
 
@@ -74,11 +76,26 @@ export interface ServiceCatalogItemRow {
   created_at: string;
 }
 
-export interface ReservationRow {
+export interface ReservationLocationFields {
+  origin_lat?: number | null;
+  origin_lng?: number | null;
+  origin_address?: string | null;
+  destination_lat?: number | null;
+  destination_lng?: number | null;
+  destination_address?: string | null;
+  return_origin_lat?: number | null;
+  return_origin_lng?: number | null;
+  return_origin_address?: string | null;
+  return_destination_lat?: number | null;
+  return_destination_lng?: number | null;
+  return_destination_address?: string | null;
+}
+export interface ReservationRow extends ReservationLocationFields {
   id: string;
   folio: string;
   customer_id: string;
   service_type: ServiceType;
+  service_catalog_item_id?: string | null;
   pickup_point: string;
   dropoff_point: string;
   hotel: string | null;
@@ -160,16 +177,47 @@ type Tables<Row, Insert, Update = Partial<Insert>> = {
 export interface Database {
   public: {
     Tables: {
-      profiles: Tables<ProfileRow, Omit<ProfileRow, "created_at" | "updated_at">>;
-      customers: Tables<CustomerRow, Partial<Omit<CustomerRow, "id" | "created_at" | "updated_at">> & { full_name: string }>;
-      vehicles: Tables<VehicleRow, Omit<VehicleRow, "id" | "created_at" | "updated_at" | "deleted_at">>;
-      drivers: Tables<DriverRow, Omit<DriverRow, "id" | "created_at" | "updated_at" | "deleted_at">>;
-      service_catalog_items: Tables<ServiceCatalogItemRow, Omit<ServiceCatalogItemRow, "id" | "created_at">>;
-      reservations: Tables<ReservationRow, Partial<Omit<ReservationRow, "id" | "folio" | "created_at" | "updated_at">>>;
-      reservation_status_history: Tables<ReservationStatusHistoryRow, Omit<ReservationStatusHistoryRow, "id" | "created_at">>;
-      ticket_files: Tables<TicketFileRow, Omit<TicketFileRow, "id" | "generated_at">>;
+      profiles: Tables<
+        ProfileRow,
+        Omit<ProfileRow, "created_at" | "updated_at">
+      >;
+      customers: Tables<
+        CustomerRow,
+        Partial<Omit<CustomerRow, "id" | "created_at" | "updated_at">> & {
+          full_name: string;
+        }
+      >;
+      vehicles: Tables<
+        VehicleRow,
+        Omit<VehicleRow, "id" | "created_at" | "updated_at" | "deleted_at">
+      >;
+      drivers: Tables<
+        DriverRow,
+        Omit<DriverRow, "id" | "created_at" | "updated_at" | "deleted_at">
+      >;
+      service_catalog_items: Tables<
+        ServiceCatalogItemRow,
+        Omit<ServiceCatalogItemRow, "id" | "created_at">
+      >;
+      reservations: Tables<
+        ReservationRow,
+        Partial<
+          Omit<ReservationRow, "id" | "folio" | "created_at" | "updated_at">
+        >
+      >;
+      reservation_status_history: Tables<
+        ReservationStatusHistoryRow,
+        Omit<ReservationStatusHistoryRow, "id" | "created_at">
+      >;
+      ticket_files: Tables<
+        TicketFileRow,
+        Omit<TicketFileRow, "id" | "generated_at">
+      >;
       settings: Tables<SettingsRow, Omit<SettingsRow, "updated_at">>;
-      activity_logs: Tables<ActivityLogRow, Omit<ActivityLogRow, "id" | "created_at">>;
+      activity_logs: Tables<
+        ActivityLogRow,
+        Omit<ActivityLogRow, "id" | "created_at">
+      >;
     };
     Functions: {
       create_reservation: {

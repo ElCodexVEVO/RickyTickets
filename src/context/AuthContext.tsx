@@ -1,7 +1,15 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import type { ProfileRow } from "@/types/database.types";
+import { queryClient } from "@/lib/queryClient";
 
 interface AuthContextValue {
   user: User | null;
@@ -10,7 +18,10 @@ interface AuthContextValue {
   loading: boolean;
   isAdmin: boolean;
   canEditReservations: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -30,13 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!data.session) setLoading(false);
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      if (!nextSession) {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
+        setSession(nextSession);
+        if (!nextSession) {
+          setProfile(null);
+          setLoading(false);
+        }
+      },
+    );
 
     return () => {
       active = false;
@@ -48,25 +61,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!session?.user) return;
     let active = true;
     setLoading(true);
-
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", session.user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) {
-          console.error("[RickyTickets] No se pudo cargar el perfil:", error.message);
-          setProfile(null);
-        } else {
-          setProfile(data as ProfileRow);
-        }
-        setLoading(false);
-      });
-
+    const userId = session.user.id;
+    async function refreshProfile() {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+      if (!active) return;
+      const nextProfile = error ? null : (data as ProfileRow);
+      setProfile(nextProfile);
+      setLoading(false);
+      if (!nextProfile?.active) {
+        queryClient.clear();
+        await supabase.auth.signOut();
+      }
+    }
+    void refreshProfile();
+    const interval = window.setInterval(() => void refreshProfile(), 30_000);
+    const onFocus = () => void refreshProfile();
+    window.addEventListener("focus", onFocus);
     return () => {
       active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
     };
   }, [session?.user?.id]);
 
@@ -76,14 +94,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       session,
       loading,
-      isAdmin: profile?.role === "admin",
-      canEditReservations: profile?.role === "admin" || profile?.permissions?.can_edit_reservations === true,
+      isAdmin: profile?.active === true && profile.role === "admin",
+      canEditReservations:
+        profile?.active === true &&
+        (profile.role === "admin" ||
+          profile.permissions?.can_edit_reservations === true),
       signIn: async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         return { error: error?.message ?? null };
       },
       signOut: async () => {
         await supabase.auth.signOut();
+        queryClient.clear();
       },
     }),
     [session, profile, loading],

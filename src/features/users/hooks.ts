@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listProfiles, updateProfileAccess, createEmployee } from "@/features/users/api";
+import {
+  listProfiles,
+  updateProfileAccess,
+  createEmployee,
+} from "@/features/users/api";
 
 export function useProfiles() {
   return useQuery({
@@ -12,8 +16,13 @@ export function useProfiles() {
 export function useUpdateProfileAccess() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateProfileAccess>[1] }) =>
-      updateProfileAccess(id, patch),
+    mutationFn: ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Parameters<typeof updateProfileAccess>[1];
+    }) => updateProfileAccess(id, patch),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["profiles"] }),
   });
 }

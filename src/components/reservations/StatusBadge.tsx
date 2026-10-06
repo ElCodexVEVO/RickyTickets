@@ -23,10 +23,16 @@ const classes: Record<ReservationStatus, string> = {
   confirmed: "bg-positive-50 text-positive-700",
   in_service: "bg-gold-300/40 text-gold-700",
   completed: "bg-positive-50 text-positive-700",
-  cancelled: "bg-cream-200 text-ink-500",
+  cancelled: "bg-danger-50 text-danger-500",
 };
 
-export function StatusBadge({ status, lang = "es" }: { status: ReservationStatus; lang?: "es" | "en" }) {
+export function StatusBadge({
+  status,
+  lang = "es",
+}: {
+  status: ReservationStatus;
+  lang?: "es" | "en";
+}) {
   return (
     <span
       className={clsx(

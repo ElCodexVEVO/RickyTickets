@@ -14,23 +14,34 @@ export function StatCard({
   label: string;
   value: string;
   hint?: string;
-  tone?: "default" | "positive";
+  tone?: "default" | "positive" | "danger" | "info";
   delayMs?: number;
 }) {
   return (
-    <Card className="flex animate-fade-in-up items-center gap-4 p-5" style={{ animationDelay: `${delayMs}ms` }}>
+    <Card
+      className="stat-card flex min-h-[78px] animate-fade-in-up items-center gap-4 px-4 py-2.5"
+      style={{ animationDelay: `${delayMs}ms` }}
+    >
       <div
         className={clsx(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
-          tone === "positive" ? "bg-positive-50 text-positive-700" : "bg-carbon-950 text-gold-400",
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
+          tone === "positive"
+            ? "bg-positive-50 text-positive-700"
+            : tone === "danger"
+              ? "bg-danger-500/15 text-danger-500"
+              : tone === "info"
+                ? "bg-sky-400/15 text-sky-300"
+                : "bg-gold-500/15 text-gold-400",
         )}
       >
-        <Icon className="h-5 w-5" />
+        <Icon className="h-6 w-6" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-ink-500">{label}</p>
-        <p className="mt-0.5 font-display text-2xl font-semibold text-ink-900 truncate">{value}</p>
-        {hint && <p className="text-xs text-ink-500">{hint}</p>}
+        <p className="font-display text-2xl font-semibold leading-none text-ink-900 truncate">
+          {value}
+        </p>
+        <p className="mt-1 text-xs text-ink-900">{label}</p>
+        {hint && <p className="mt-0.5 text-[10px] text-ink-500">{hint}</p>}
       </div>
     </Card>
   );

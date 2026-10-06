@@ -28,7 +28,8 @@ const DEFAULT_COMPANY_INFO: CompanyInfo = {
 
 const DEFAULT_MEETING_POINTS: MeetingPoints = {
   tulum_airport: "At Gate 4",
-  cancun_airport: "Terminal 2: Welcome Bar · Terminal 3: Margarita Ville Restaurant · Terminal 4: Welcome Bar",
+  cancun_airport:
+    "Terminal 2: Welcome Bar · Terminal 3: Margarita Ville Restaurant · Terminal 4: Welcome Bar",
 };
 
 const DEFAULT_TICKET_TERMS: TicketTerms = {
@@ -47,27 +48,38 @@ export function useCompanySettings() {
 
       const map = new Map((data ?? []).map((row) => [row.key, row.value]));
       return {
-        companyInfo: (map.get("company_info") as unknown as CompanyInfo) ?? DEFAULT_COMPANY_INFO,
-        meetingPoints: (map.get("meeting_points") as unknown as MeetingPoints) ?? DEFAULT_MEETING_POINTS,
-        ticketTerms: (map.get("ticket_terms") as unknown as TicketTerms) ?? DEFAULT_TICKET_TERMS,
+        companyInfo:
+          (map.get("company_info") as unknown as CompanyInfo) ??
+          DEFAULT_COMPANY_INFO,
+        meetingPoints:
+          (map.get("meeting_points") as unknown as MeetingPoints) ??
+          DEFAULT_MEETING_POINTS,
+        ticketTerms:
+          (map.get("ticket_terms") as unknown as TicketTerms) ??
+          DEFAULT_TICKET_TERMS,
       };
     },
     retry: 0,
-    placeholderData: {
-      companyInfo: DEFAULT_COMPANY_INFO,
-      meetingPoints: DEFAULT_MEETING_POINTS,
-      ticketTerms: DEFAULT_TICKET_TERMS,
-    },
   });
 }
 
 export function useUpdateSetting() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: Record<string, unknown> }) => {
-      const { error } = await supabase.from("settings").upsert({ key, value });
+    mutationFn: async ({
+      key,
+      value,
+    }: {
+      key: string;
+      value: Record<string, unknown>;
+    }) => {
+      const { data } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("settings")
+        .upsert({ key, value, updated_by: data.user?.id });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["settings", "ticket"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["settings", "ticket"] }),
   });
 }

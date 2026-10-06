@@ -3,12 +3,12 @@ import { useAuth } from "@/context/AuthContext";
 import { FullScreenLoader } from "@/components/ui/FullScreenLoader";
 
 export function ProtectedRoute() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <FullScreenLoader />;
 
-  if (!user) {
+  if (!user || !profile?.active || profile.id !== user.id) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

@@ -1,84 +1,224 @@
 import { NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   FilePlus2,
   CalendarRange,
+  CalendarDays,
   Users,
   Car,
   IdCard,
   BarChart3,
   Settings,
   UserCog,
+  History,
+  PanelLeftClose,
+  PanelLeftOpen,
+  LogOut,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 import logoUrl from "@/assets/logo.png";
-
-const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/ticket/nuevo", label: "Crear Ticket", icon: FilePlus2 },
-  { to: "/reservaciones", label: "Reservaciones", icon: CalendarRange },
-  { to: "/clientes", label: "Clientes", icon: Users },
-  { to: "/vehiculos", label: "Vehículos", icon: Car },
-  { to: "/conductores", label: "Conductores", icon: IdCard },
-  { to: "/reportes", label: "Reportes", icon: BarChart3, adminOnly: true },
-  { to: "/usuarios", label: "Usuarios", icon: UserCog, adminOnly: true },
-  { to: "/configuracion", label: "Configuración", icon: Settings, adminOnly: true },
+const groups = [
+  {
+    label: "Operación",
+    items: [
+      { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+      { to: "/ticket/nuevo", label: "Nueva reservación", icon: FilePlus2 },
+      { to: "/agenda", label: "Agenda / Servicios", icon: CalendarDays },
+      { to: "/reservaciones", label: "Reservaciones", icon: CalendarRange },
+    ],
+  },
+  {
+    label: "Directorio",
+    items: [
+      { to: "/clientes", label: "Clientes", icon: Users },
+      { to: "/conductores", label: "Conductores", icon: IdCard },
+      { to: "/vehiculos", label: "Vehículos", icon: Car },
+    ],
+  },
+  {
+    label: "Gestión",
+    admin: true,
+    items: [
+      { to: "/reportes", label: "Reportes", icon: BarChart3 },
+      { to: "/usuarios", label: "Usuarios", icon: UserCog },
+      { to: "/configuracion", label: "Configuración", icon: Settings },
+      { to: "/actividad", label: "Actividad", icon: History },
+    ],
+  },
 ];
-
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function Sidebar({
+  onNavigate,
+  collapsed = false,
+  onToggle,
+}: {
+  onNavigate?: () => void;
+  collapsed?: boolean;
+  onToggle?: () => void;
+}) {
   const { profile, isAdmin, signOut } = useAuth();
-
+  const connection = useQuery({
+    queryKey: ["connection"],
+    queryFn: async () => {
+      const { error } = await supabase
+        .from("settings")
+        .select("key", { head: true, count: "exact" });
+      if (error) throw error;
+      return true;
+    },
+    refetchInterval: 60000,
+    retry: 0,
+  });
   return (
-    <div className="flex h-full w-full flex-col bg-carbon-950 text-cream-50">
-      <div className="flex items-center gap-3 px-5 py-6">
-        <img src={logoUrl} alt="Danny Transfers" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-        <div className="min-w-0">
-          <p className="font-display text-sm font-semibold tracking-wide text-cream-50">Danny Transfers</p>
-          <p className="text-[11px] uppercase tracking-[0.14em] text-ink-300">RickyTickets</p>
-        </div>
+    <div className="sidebar-scenery flex h-full flex-col border-r border-line bg-carbon-950 text-cream-50">
+      <div
+        className={clsx(
+          "flex flex-col items-center border-b border-line",
+          collapsed ? "px-2 py-4" : "px-5 pb-4 pt-3",
+        )}
+      >
+        <img
+          src={logoUrl}
+          alt="Danny Transfers"
+          className={
+            collapsed ? "h-12 w-12 object-contain" : "h-32 w-44 object-cover"
+          }
+        />
+        {!collapsed && (
+          <div className="text-center">
+            <p className="text-[10px] tracking-[.12em] text-ink-700">
+              RickyTickets V2
+            </p>
+          </div>
+        )}
       </div>
-
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4 scrollbar-none">
-        {navItems
-          .filter((item) => !item.adminOnly || isAdmin)
-          .map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                clsx(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-gold-500 text-carbon-950"
-                    : "text-cream-100/80 hover:bg-carbon-800 hover:text-cream-50",
-                )
-              }
-            >
-              <item.icon className="h-4.5 w-4.5 shrink-0" size={18} />
-              <span className="truncate">{item.label}</span>
-            </NavLink>
+      <nav
+        aria-label="Navegación principal"
+        className="flex-1 space-y-4 overflow-y-auto px-3 py-4"
+      >
+        {groups
+          .filter((g) => !g.admin || isAdmin)
+          .map((g) => (
+            <div key={g.label}>
+              {!collapsed && (
+                <p className="mb-2 px-3 text-[10px] uppercase tracking-[.13em] text-ink-500">
+                  {g.label}
+                </p>
+              )}
+              <div className="space-y-1">
+                {g.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={"end" in item ? item.end : false}
+                    title={collapsed ? item.label : undefined}
+                    aria-label={collapsed ? item.label : undefined}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      clsx(
+                        "flex items-center gap-3 rounded-md border-l-2 py-2 text-[13px] transition-colors duration-200",
+                        collapsed ? "justify-center px-2" : "px-3",
+                        isActive
+                          ? "border-gold-400 bg-gold-500/25 text-cream-100"
+                          : "border-transparent text-ink-700 hover:bg-carbon-800 hover:text-cream-50",
+                      )
+                    }
+                  >
+                    <item.icon size={17} className="shrink-0" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
       </nav>
-
-      <div className="border-t border-carbon-800 px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-carbon-800 text-xs font-semibold text-gold-400">
-            {(profile?.full_name ?? "?").slice(0, 1).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-cream-50">{profile?.full_name ?? "Cargando..."}</p>
-            <p className="text-xs text-ink-300">{isAdmin ? "Administrador" : "Empleado"}</p>
-          </div>
-        </div>
-        <button
-          onClick={signOut}
-          className="mt-3 w-full rounded-lg border border-carbon-700 py-2 text-xs font-medium text-ink-300 transition-colors hover:border-gold-500/50 hover:text-gold-400"
+      <div className="border-t border-line p-3">
+        <div
+          title={
+            connection.isSuccess
+              ? "Supabase conectado"
+              : "Conexión con Supabase sin confirmar"
+          }
+          className={clsx(
+            "mb-3 flex items-center gap-2 rounded-lg border border-line bg-carbon-900 p-2.5",
+            collapsed && "justify-center",
+          )}
         >
-          Cerrar sesión
-        </button>
+          <span
+            className={clsx(
+              "h-2 w-2 shrink-0 rounded-full",
+              connection.isSuccess ? "bg-positive-500" : "bg-pending-500",
+            )}
+          />
+          {!collapsed && (
+            <div className="text-[11px]">
+              <p
+                className={
+                  connection.isSuccess
+                    ? "text-positive-700"
+                    : "text-pending-500"
+                }
+              >
+                {connection.isSuccess
+                  ? "Sistema operativo"
+                  : "Revisar conexión"}
+              </p>
+              <p className="mt-0.5 text-[10px] text-ink-500">
+                {connection.isSuccess
+                  ? "Supabase conectado"
+                  : connection.isPending
+                    ? "Comprobando Supabase…"
+                    : "Sin conexión confirmada"}
+              </p>
+            </div>
+          )}
+        </div>
+        <div
+          className={clsx("flex items-center gap-2", collapsed && "flex-col")}
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-carbon-800 text-xs text-gold-400">
+            {profile?.full_name.slice(0, 1).toUpperCase()}
+          </div>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium">
+                {profile?.full_name}
+              </p>
+              <p className="text-[10px] text-ink-500">
+                {isAdmin ? "Administrador" : "Empleado"}
+              </p>
+            </div>
+          )}
+          <button
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+            onClick={() => void signOut()}
+            className="rounded-md p-2 text-ink-500 hover:bg-carbon-800"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
+        {onToggle && (
+          <button
+            onClick={onToggle}
+            title={collapsed ? "Expandir navegación" : "Contraer navegación"}
+            aria-label={
+              collapsed ? "Expandir navegación" : "Contraer navegación"
+            }
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg p-1 text-[10px] text-ink-500 hover:bg-carbon-800"
+          >
+            {collapsed ? (
+              <PanelLeftOpen size={16} />
+            ) : (
+              <>
+                <PanelLeftClose size={16} />
+                Contraer menú
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

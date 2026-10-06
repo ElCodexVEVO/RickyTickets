@@ -13,7 +13,10 @@ export function useMonthlyRevenue(monthsBack = 6) {
   return useQuery({
     queryKey: ["reports", "monthly-revenue", monthsBack],
     queryFn: async (): Promise<MonthlyRevenuePoint[]> => {
-      const start = format(startOfMonth(subMonths(new Date(), monthsBack - 1)), "yyyy-MM-dd");
+      const start = format(
+        startOfMonth(subMonths(new Date(), monthsBack - 1)),
+        "yyyy-MM-dd",
+      );
       const { data, error } = await supabase
         .from("reservations")
         .select("date, price, status")
@@ -35,7 +38,10 @@ export function useMonthlyRevenue(monthsBack = 6) {
           bucket.count += 1;
         }
       }
-      return Array.from(buckets.entries()).map(([month, v]) => ({ month, ...v }));
+      return Array.from(buckets.entries()).map(([month, v]) => ({
+        month,
+        ...v,
+      }));
     },
     retry: 0,
   });
@@ -45,7 +51,10 @@ export function useStatusBreakdown() {
   return useQuery({
     queryKey: ["reports", "status-breakdown"],
     queryFn: async (): Promise<Record<ReservationStatus, number>> => {
-      const { data, error } = await supabase.from("reservations").select("status").is("deleted_at", null);
+      const { data, error } = await supabase
+        .from("reservations")
+        .select("status")
+        .is("deleted_at", null);
       if (error) throw error;
       const result: Record<ReservationStatus, number> = {
         pending: 0,
@@ -76,14 +85,21 @@ export function useFleetUsage() {
 
       const counts = new Map<string, { label: string; count: number }>();
       for (const row of data ?? []) {
-        const vehicle = row.vehicle as unknown as { brand: string; model: string } | null;
-        const label = vehicle ? `${vehicle.brand} ${vehicle.model}` : "Sin asignar";
+        const vehicle = row.vehicle as unknown as {
+          brand: string;
+          model: string;
+        } | null;
+        const label = vehicle
+          ? `${vehicle.brand} ${vehicle.model}`
+          : "Sin asignar";
         const key = row.vehicle_id as string;
         const existing = counts.get(key);
         if (existing) existing.count += 1;
         else counts.set(key, { label, count: 1 });
       }
-      return Array.from(counts.values()).sort((a, b) => b.count - a.count).slice(0, 5);
+      return Array.from(counts.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
     },
     retry: 0,
   });

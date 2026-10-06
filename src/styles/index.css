@@ -1,65 +1,429 @@
 @import "tailwindcss";
-
 @theme {
-  --font-display: "Playfair Display", ui-serif, Georgia, serif;
-  --font-script: "Cormorant Garamond", ui-serif, Georgia, serif;
-  --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-
-  /* Negro carbón */
-  --color-carbon-950: #0b0b0d;
-  --color-carbon-900: #131217;
-  --color-carbon-800: #1c1b21;
-  --color-carbon-700: #29282f;
-  --color-carbon-600: #3a3841;
-
-  /* Dorado */
-  --color-gold-300: #e6cd8e;
-  --color-gold-400: #d4af61;
-  --color-gold-500: #c9a227;
-  --color-gold-600: #a9822e;
-  --color-gold-700: #816323;
-
-  /* Blanco / crema */
-  --color-cream-50: #faf8f3;
-  --color-cream-100: #f1eee6;
-  --color-cream-200: #e5e1d8;
-
-  /* Gris claro / tinta */
-  --color-ink-900: #18161a;
-  --color-ink-700: #3f3c39;
-  --color-ink-500: #6b6862;
-  --color-ink-300: #a39e95;
-
-  /* Verde: solo estados positivos */
-  --color-positive-50: #e4f1e9;
-  --color-positive-500: #2f7d52;
-  --color-positive-700: #1f5c3b;
-
-  /* Ámbar sutil: pendiente (no es un color libre de marca, uso restringido a estado) */
-  --color-pending-50: #f4ecd8;
-  --color-pending-500: #9c7a22;
-
-  --shadow-card: 0 1px 2px rgba(20, 18,14, 0.06), 0 10px 30px -14px rgba(20, 18, 14, 0.16);
-  --shadow-card-dark: 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 34px -16px rgba(0, 0, 0, 0.55);
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-script: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-carbon-950: #090c0e;
+  --color-carbon-900: #111517;
+  --color-carbon-800: #1c2022;
+  --color-carbon-700: #2b3032;
+  --color-carbon-600: #404648;
+  --color-surface-950: #0c1012;
+  --color-surface-900: #15191b;
+  --color-surface-800: #1e2325;
+  --color-surface-700: #2c3234;
+  --color-white: #15191b;
+  --color-line: #2b3032;
+  --color-gold-300: #ead092;
+  --color-gold-400: #e1bd68;
+  --color-gold-500: #d5ac50;
+  --color-gold-600: #c7a054;
+  --color-gold-700: #e5c37d;
+  --color-cream-50: #f5f2e9;
+  --color-cream-100: #ebe4d4;
+  --color-cream-200: #ddd5c1;
+  --color-ink-900: #f1f0ea;
+  --color-ink-700: #c4ccd0;
+  --color-ink-500: #94a2ab;
+  --color-ink-400: #9aa9b2;
+  --color-ink-300: #a6afb4;
+  --color-positive-50: #112e25;
+  --color-positive-500: #49bb87;
+  --color-positive-700: #75d4a7;
+  --color-pending-50: #342c18;
+  --color-pending-500: #e0bb68;
+  --color-danger-50: #361e22;
+  --color-danger-500: #f18181;
+  --shadow-card: 0 2px 8px #00000018;
 }
-
 @layer base {
   html {
-    color-scheme: light;
+    color-scheme: dark;
   }
   body {
-    @apply bg-cream-50 text-ink-900 antialiased;
+    @apply bg-surface-950 text-ink-900 antialiased;
+    margin: 0;
     font-family: var(--font-sans);
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
   }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  a,
+  select {
+    cursor: pointer;
+  }
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-gold-500);
+    outline-offset: 3px;
+  }
   ::selection {
-    @apply bg-gold-300/50;
+    background: #d5ac5050;
+  }
+  th {
+    background: #101416;
+  }
+  td {
+    vertical-align: middle;
   }
 }
-
+@layer components {
+  .field-control {
+    height: 2.5rem;
+    width: 100%;
+  }
+}
+@layer utilities {
+  .sidebar-scenery {
+    background-image:
+      linear-gradient(#090c0e 38%, #090c0ef5 50%, #090c0e70 77%, #090c0e 100%),
+      url("../assets/tulum-coast-v2.png");
+    background-size:
+      cover,
+      auto 60%;
+    background-position:
+      center,
+      16% bottom;
+    background-repeat: no-repeat;
+  }
+  .dashboard {
+    container-type: inline-size;
+  }
+  .stat-card p {
+    line-height: 1.25;
+  }
+  .dashboard .stat-card p {
+    line-height: 1.25;
+  }
+  .dashboard .stat-card p:first-child {
+    line-height: 1;
+  }
+  .sidebar-scenery img {
+    mix-blend-mode: lighten;
+  }
+  .dashboard p,
+  .dashboard h2,
+  .dashboard h3,
+  .dashboard a,
+  .dashboard td,
+  .dashboard th {
+    line-height: 1.45;
+  }
+  .panel-heading {
+    line-height: 1.45;
+  }
+  .composer-wizard p,
+  .composer-wizard label,
+  .composer-wizard span,
+  .ticket-paper p {
+    line-height: 1.45;
+  }
+  .dashboard-side > div:first-child > div:last-child {
+    max-height: 230px;
+  }
+  .dashboard-list p {
+    line-height: 1.25;
+  }
+  .dashboard-list p + p {
+    margin-top: 2px;
+  }
+  .dashboard-list > a {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .dashboard-insights .space-y-2 {
+    line-height: 1.35;
+  }
+  .composer-wizard .wizard-form .customer-fields {
+    grid-template-columns: 1fr;
+  }
+  .standalone-wizard h1 {
+    font-size: 20px;
+  }
+  .standalone-wizard .wizard-form-card {
+    padding: 18px;
+  }
+  .standalone-wizard .field-control {
+    height: 36px;
+    font-size: 13px;
+  }
+  .standalone-wizard label {
+    font-size: 12px;
+  }
+  .standalone-wizard .wizard-stepper {
+    width: calc(100% - 364px);
+  }
+  @media (max-width: 1279px) {
+    .standalone-wizard .wizard-stepper {
+      width: 100%;
+    }
+  }
+  .dashboard-hero {
+    background-image:
+      linear-gradient(
+        90deg,
+        #0c1012 2%,
+        #0c1012d9 36%,
+        #0c101244 75%,
+        #0c1012b3
+      ),
+      url("../assets/tulum-coast-v2.png");
+    background-size: cover;
+    background-position:
+      center,
+      center 34%;
+    min-height: 100px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .dashboard-layout,
+  .dashboard-operation,
+  .dashboard-insights {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+  .dashboard-insights {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .dashboard-side {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .dashboard-table {
+    display: none;
+  }
+  .panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .panel-heading h2 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .panel-heading a {
+    font-size: 12px;
+    white-space: nowrap;
+    color: var(--color-gold-400);
+  }
+  .map-unconnected {
+    background-color: #0d1d23;
+    background-image:
+      linear-gradient(#547a8420 1px, transparent 1px),
+      linear-gradient(90deg, #547a8420 1px, transparent 1px);
+    background-size: 25px 25px;
+  }
+  .composer-host[hidden] {
+    display: none;
+  }
+  .composer-host {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+  }
+  .composer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: #090c0ebf;
+  }
+  .reservation-composer {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: min(100%, 390px);
+    background: var(--color-surface-950);
+    border-left: 1px solid var(--color-line);
+    overflow-y: auto;
+  }
+  .wizard-stepper {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    padding: 18px 0;
+  }
+  .wizard-stepper::before {
+    content: "";
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 32px;
+    height: 1px;
+    background: var(--color-carbon-600);
+  }
+  .wizard-stepper button {
+    z-index: 1;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+  }
+  .wizard-stepper button span {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--color-carbon-600);
+    border-radius: 50%;
+    background: var(--color-carbon-800);
+    color: var(--color-ink-700);
+  }
+  .wizard-stepper button[aria-current] {
+    color: var(--color-cream-50);
+    font-weight: 600;
+  }
+  .wizard-stepper button[aria-current] span {
+    color: #17150e;
+    background: var(--color-gold-400);
+    border-color: var(--color-gold-300);
+    box-shadow: 0 0 0 3px #d5ac501c;
+  }
+  .composer-wizard {
+    padding: 0 16px;
+  }
+  .composer-wizard .wizard-stepper {
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .composer-wizard .wizard-form-card {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .composer-wizard .wizard-form {
+    min-height: calc(100dvh - 151px);
+    display: flex;
+    flex-direction: column;
+  }
+  .composer-wizard .field-control {
+    height: 35px;
+    font-size: 12px;
+  }
+  .composer-wizard label {
+    font-size: 12px;
+  }
+  .composer-wizard .wizard-form > div:first-child {
+    padding-top: 12px;
+  }
+  .composer-wizard .wizard-form > div:first-child h2 {
+    font-size: 14px;
+    padding-bottom: 12px;
+  }
+  .composer-wizard .sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .composer-wizard .gap-4 {
+    gap: 12px;
+  }
+  .wizard-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-line);
+  }
+  .wizard-footer .wizard-next {
+    margin-left: auto;
+  }
+  .composer-wizard .wizard-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: auto;
+    padding: 14px 0;
+    background: var(--color-surface-950);
+  }
+  .composer-wizard .wizard-footer .wizard-next {
+    flex: 1;
+  }
+  .ticket-paper {
+    color-scheme: light;
+    background: #f5edde;
+    color: #22251f;
+    border: 1px solid #d7cab2;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px #0004;
+  }
+  .ticket-paper .paper-rule {
+    border-color: #d9cfbc;
+  }
+  .ticket-paper .paper-muted {
+    color: #716b5f;
+  }
+  .ticket-paper .paper-value {
+    color: #24251f;
+  }
+  @media (min-width: 1600px) {
+    .app-shell.composer-open {
+      grid-template-columns: var(--sidebar-width) minmax(0, 1fr) 360px !important;
+    }
+    .composer-host {
+      position: sticky;
+      inset: auto;
+      top: 0;
+      height: 100dvh;
+      z-index: 35;
+    }
+    .composer-backdrop {
+      display: none;
+    }
+    .reservation-composer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+  }
+  @container (min-width: 900px) {
+    .dashboard-layout {
+      grid-template-columns: minmax(0, 1fr) 232px;
+    }
+  }
+  @container (min-width: 1350px) {
+    .dashboard-layout {
+      grid-template-columns: minmax(0, 1fr) 262px;
+    }
+    .dashboard-table {
+      display: block;
+    }
+    .dashboard-list {
+      display: none;
+    }
+  }
+  @container (max-width: 650px) {
+    .dashboard-insights {
+      grid-template-columns: 1fr;
+    }
+  }
+}
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
@@ -81,32 +445,26 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
-
   .animate-fade-in-up {
-    animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: fade-in-up 200ms ease-out both;
   }
   .animate-fade-in {
-    animation: fade-in 0.35s ease-out both;
+    animation: fade-in 180ms ease-out both;
   }
   .animate-scale-in {
-    animation: scale-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .animate-float-slow {
-    animation: float-slow 10s ease-in-out infinite;
+    animation: scale-in 180ms ease-out both;
   }
 }
-
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
     transform: none;
   }
 }
-
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -115,33 +473,48 @@
     opacity: 1;
   }
 }
-
 @keyframes scale-in {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.98);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
   }
 }
-
-@keyframes float-slow {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(10px, -16px);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in-up,
-  .animate-fade-in,
-  .animate-scale-in,
-  .animate-float-slow {
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media print {
+  aside,
+  header,
+  button,
+  .no-print {
+    display: none !important;
+  }
+  .app-shell {
+    display: block !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  body,
+  main,
+  .bg-white {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  * {
+    box-shadow: none !important;
+    color: #111 !important;
+  }
+  table {
+    font-size: 10px;
   }
 }

@@ -6,12 +6,23 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { FieldWrapper, Input, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useProfiles, useUpdateProfileAccess, useCreateEmployee } from "@/features/users/hooks";
+import {
+  useProfiles,
+  useUpdateProfileAccess,
+  useCreateEmployee,
+} from "@/features/users/hooks";
 import { useAuth } from "@/context/AuthContext";
 import { initials } from "@/lib/format";
 import type { UserRole } from "@/types/database.types";
+import { QueryState } from "@/components/ui/QueryState";
 
-const emptyForm = { email: "", password: "", full_name: "", phone: "", role: "employee" as UserRole };
+const emptyForm = {
+  email: "",
+  password: "",
+  full_name: "",
+  phone: "",
+  role: "employee" as UserRole,
+};
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -30,7 +41,9 @@ export default function UsersPage() {
       setModalOpen(false);
       setForm(emptyForm);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "No se pudo crear el empleado.");
+      setFormError(
+        err instanceof Error ? err.message : "No se pudo crear el empleado.",
+      );
     }
   }
 
@@ -46,11 +59,16 @@ export default function UsersPage() {
           </Button>
         }
       />
+      <QueryState loading={isLoading} error={updateAccess.error} />
 
       <Card className="overflow-hidden">
         {isError ? (
           <div className="p-6">
-            <EmptyState icon={UserCog} title="No se pudo conectar a Supabase" description="Configura tus credenciales en .env.local." />
+            <EmptyState
+              icon={UserCog}
+              title="No se pudo conectar a Supabase"
+              description="Configura tus credenciales en .env.local."
+            />
           </div>
         ) : !isLoading && (profiles?.length ?? 0) === 0 ? (
           <div className="p-6">
@@ -60,7 +78,7 @@ export default function UsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-cream-200 text-left text-[11px] font-semibold uppercase tracking-wide text-ink-500">
+                <tr className="border-b border-line text-left text-[11px] font-semibold uppercase tracking-wide text-ink-500">
                   <th className="px-4 py-3">Usuario</th>
                   <th className="px-4 py-3">Teléfono</th>
                   <th className="px-4 py-3">Rol</th>
@@ -70,15 +88,22 @@ export default function UsersPage() {
               </thead>
               <tbody>
                 {profiles?.map((p) => (
-                  <tr key={p.id} className="border-b border-cream-200 last:border-0 hover:bg-cream-50">
+                  <tr
+                    key={p.id}
+                    className="border-b border-line last:border-0 hover:bg-surface-950"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-carbon-950 text-xs font-semibold text-gold-400">
                           {initials(p.full_name)}
                         </div>
                         <div>
-                          <p className="font-medium text-ink-900">{p.full_name}</p>
-                          {p.id === user?.id && <p className="text-xs text-ink-500">Tú</p>}
+                          <p className="font-medium text-ink-900">
+                            {p.full_name}
+                          </p>
+                          {p.id === user?.id && (
+                            <p className="text-xs text-ink-500">Tú</p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -87,7 +112,12 @@ export default function UsersPage() {
                       <Select
                         value={p.role}
                         disabled={p.id === user?.id}
-                        onChange={(e) => updateAccess.mutate({ id: p.id, patch: { role: e.target.value as UserRole } })}
+                        onChange={(e) =>
+                          updateAccess.mutate({
+                            id: p.id,
+                            patch: { role: e.target.value as UserRole },
+                          })
+                        }
                         className="h-8 w-32 text-xs"
                       >
                         <option value="employee">Empleado</option>
@@ -102,7 +132,12 @@ export default function UsersPage() {
                         onChange={(e) =>
                           updateAccess.mutate({
                             id: p.id,
-                            patch: { permissions: { ...p.permissions, can_edit_reservations: e.target.checked } },
+                            patch: {
+                              permissions: {
+                                ...p.permissions,
+                                can_edit_reservations: e.target.checked,
+                              },
+                            },
                           })
                         }
                         className="h-4 w-4 accent-gold-500"
@@ -110,10 +145,17 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => updateAccess.mutate({ id: p.id, patch: { active: !p.active } })}
+                        onClick={() =>
+                          updateAccess.mutate({
+                            id: p.id,
+                            patch: { active: !p.active },
+                          })
+                        }
                         disabled={p.id === user?.id}
                         className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          p.active ? "bg-positive-50 text-positive-700" : "bg-cream-200 text-ink-500"
+                          p.active
+                            ? "bg-positive-50 text-positive-700"
+                            : "bg-surface-700 text-ink-500"
                         }`}
                       >
                         {p.active ? "Activo" : "Inactivo"}
@@ -144,32 +186,64 @@ export default function UsersPage() {
       >
         <div className="space-y-4">
           <FieldWrapper label="Nombre completo" htmlFor="u_name" required>
-            <Input id="u_name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+            <Input
+              id="u_name"
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+            />
           </FieldWrapper>
           <FieldWrapper label="Correo" htmlFor="u_email" required>
-            <Input id="u_email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <Input
+              id="u_email"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
           </FieldWrapper>
-          <FieldWrapper label="Contraseña temporal" htmlFor="u_password" required hint="El empleado podrá cambiarla después.">
-            <Input id="u_password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <FieldWrapper
+            label="Contraseña temporal"
+            htmlFor="u_password"
+            required
+            hint="El empleado podrá cambiarla después."
+          >
+            <Input
+              id="u_password"
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
           </FieldWrapper>
           <div className="grid grid-cols-2 gap-4">
             <FieldWrapper label="Teléfono" htmlFor="u_phone">
-              <Input id="u_phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <Input
+                id="u_phone"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
             </FieldWrapper>
             <FieldWrapper label="Rol" htmlFor="u_role">
-              <Select id="u_role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}>
+              <Select
+                id="u_role"
+                value={form.role}
+                onChange={(e) =>
+                  setForm({ ...form, role: e.target.value as UserRole })
+                }
+              >
                 <option value="employee">Empleado</option>
                 <option value="admin">Admin</option>
               </Select>
             </FieldWrapper>
           </div>
 
-          {formError && <p className="text-sm font-medium text-gold-700">{formError}</p>}
+          {formError && (
+            <p className="text-sm font-medium text-gold-700">{formError}</p>
+          )}
 
-          <div className="flex items-center gap-2 rounded-lg bg-cream-50 p-3 text-xs text-ink-500">
+          <div className="flex items-center gap-2 rounded-lg bg-surface-950 p-3 text-xs text-ink-500">
             <ShieldCheck className="h-4 w-4 shrink-0 text-gold-600" />
-            Esta acción se procesa en una Edge Function con permisos de servidor; la clave de administración nunca
-            se expone en el navegador.
+            Esta acción se procesa en una Edge Function con permisos de
+            servidor; la clave de administración nunca se expone en el
+            navegador.
           </div>
         </div>
       </Modal>

@@ -4,100 +4,150 @@ import { StatusBadge } from "@/components/reservations/StatusBadge";
 import { formatCurrency, formatTicketDate, formatTime } from "@/lib/format";
 import { useCompanySettings } from "@/features/settings/hooks";
 import logoUrl from "@/assets/logo.png";
-
-function Row({ label, value }: { label: string; value?: string }) {
+import sceneryUrl from "@/assets/tulum-coast-v2.png";
+import { returnTimeLabel } from "@/lib/operations";
+function Row({
+  label,
+  value,
+  pending = false,
+}: {
+  label: string;
+  value?: string;
+  pending?: boolean;
+}) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-cream-200 py-2.5 text-sm">
-      <span className="w-[38%] shrink-0 text-[11px] font-semibold uppercase tracking-wide text-ink-500">
-        {label}
-      </span>
-      <span className="flex-1 text-right text-ink-900">{value || "—"}</span>
+    <div className="paper-rule border-b py-1.5">
+      <p className="paper-muted text-[9px]">{label}</p>
+      <p
+        className={`paper-value mt-0.5 text-[11px] font-medium leading-snug ${pending ? "inline-block rounded border border-amber-500 bg-amber-100 px-2 py-1" : ""}`}
+      >
+        {value || "—"}
+      </p>
     </div>
   );
 }
-
 export function TicketPreview({ data }: { data: TicketData }) {
   const { data: settings } = useCompanySettings();
   const companyInfo = settings?.companyInfo;
-  const meetingPoints = settings?.meetingPoints;
-
+  const draft = data.folio === "Assigned when saved";
   return (
-    <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white card-shadow">
-      <div className="flex items-center justify-between bg-carbon-950 px-5 py-5">
-        <div className="flex items-center gap-3">
-          <img src={logoUrl} alt="Danny Transfers" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-          <div>
-            <p className="text-[10px] font-semibold tracking-[0.14em] text-cream-100">
+    <div className="ticket-paper relative">
+      <div
+        className="absolute inset-y-0 left-0 w-14 bg-cover"
+        style={{
+          backgroundImage: `url(${sceneryUrl})`,
+          backgroundPosition: "70% center",
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative pl-[68px] pr-3">
+        <div className="paper-rule flex items-center justify-between gap-2 border-b py-3">
+          <div className="text-center">
+            <img
+              src={logoUrl}
+              alt="Danny Transfers"
+              className="mx-auto h-12 w-12 rounded-full object-contain"
+            />
+            <p className="mt-1 text-[8px] font-semibold tracking-wide">
               {(companyInfo?.name ?? "Danny Transfers").toUpperCase()}
             </p>
-            <p className="font-script text-xl font-semibold text-gold-400">
-              {companyInfo?.tagline ?? "Tulum Mexico"}
+            <p className="paper-muted text-[8px]">
+              {companyInfo?.tagline ?? "Tulum, México"}
             </p>
           </div>
+          <div className="text-center">
+            <QrCode size={31} className="mx-auto text-[#565346]" />
+            <p className="paper-muted mt-1 text-[7px]">QR al generar</p>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-[9px] tracking-[0.14em] text-ink-300">FOLIO</p>
-          <p className="font-mono-tab text-sm font-semibold text-cream-50">{data.folio}</p>
+        <div className="py-3">
+          <p className="text-sm font-bold">
+            {draft ? "Folio al guardar" : data.folio}
+          </p>
+          <div className="mt-1">
+            <StatusBadge status={data.status} />
+          </div>
         </div>
-      </div>
-
-      <div className="px-5 py-4">
-        <Row label="Name" value={data.customerName} />
-        <Row label="Pick Up" value={data.pickupPoint} />
-        <Row label="Room" value={data.room} />
-        <Row label="Drop Off" value={data.dropoffPoint} />
+        <Row
+          label="Cliente"
+          value={data.customerName === "Customer Name" ? "" : data.customerName}
+        />
+        <Row
+          label="Ruta"
+          value={[data.pickupPoint, data.dropoffPoint]
+            .filter(Boolean)
+            .join(" → ")}
+        />
         {data.hotel && <Row label="Hotel" value={data.hotel} />}
-        <Row label="Number of People" value={String(data.passengers)} />
-        <Row label="Date" value={formatTicketDate(data.date)} />
-        <Row label="Hour" value={formatTime(data.time)} />
-        <Row label="Phone Number, Email" value={[data.phone, data.email].filter(Boolean).join(" · ")} />
-        <Row label="Airline/Flight Number" value={[data.airline, data.flightNumber].filter(Boolean).join(" · ")} />
-
+        {data.room && <Row label="Habitación" value={data.room} />}
+        <div className="grid grid-cols-2 gap-3">
+          <Row label="Fecha" value={formatTicketDate(data.date)} />
+          <Row label="Hora de salida" value={formatTime(data.time)} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Row
+            label="Pasajeros"
+            value={`${data.passengers} ${data.passengers === 1 ? "persona" : "personas"}`}
+          />
+          <Row
+            label="Vuelo"
+            value={[data.airline, data.flightNumber].filter(Boolean).join(" ")}
+          />
+        </div>
+        <Row
+          label="Contacto"
+          value={[data.phone, data.email].filter(Boolean).join(" · ")}
+        />
+        <Row label="Vehículo" value={data.vehicleName ?? "Por asignar"} />
+        <Row label="Conductor" value={data.driverName ?? "Por asignar"} />
         {data.serviceType === "redondo" && (
-          <>
-            <p className="mb-1 mt-4 text-[10px] font-semibold uppercase tracking-[0.12em] text-gold-600">
-              Return Information
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold text-[#967121]">
+              INFORMACIÓN DE REGRESO
             </p>
             <Row
-              label="Date and Time of Return"
+              label="Fecha / Ruta"
               value={[
                 formatTicketDate(data.returnDate),
-                [data.returnPickupPoint, data.returnDropoffPoint].filter(Boolean).join(" → "),
+                [data.returnPickupPoint, data.returnDropoffPoint]
+                  .filter(Boolean)
+                  .join(" → "),
               ]
                 .filter(Boolean)
                 .join(" · ")}
             />
-            <Row label="Return Time" value={formatTime(data.returnTime)} />
+            <Row
+              label="Hora de regreso"
+              value={returnTimeLabel(data.returnTime)}
+              pending={!data.returnTime}
+            />
             {(data.returnAirline || data.returnFlightNumber) && (
               <Row
-                label="Return Airline/Flight"
-                value={[data.returnAirline, data.returnFlightNumber].filter(Boolean).join(" · ")}
+                label="Vuelo de regreso"
+                value={[data.returnAirline, data.returnFlightNumber]
+                  .filter(Boolean)
+                  .join(" ")}
               />
             )}
-          </>
+          </div>
         )}
-
-        <div className="mt-5 flex items-end justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-500">Price</p>
-            <p className="font-display text-2xl font-semibold text-ink-900">
-              {data.price != null ? formatCurrency(data.price, data.currency) : "To be confirmed"}
-            </p>
-            <div className="mt-2">
-              <StatusBadge status={data.status} lang="en" />
-            </div>
-          </div>
-          <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-cream-200 bg-cream-50 text-ink-300">
-            <QrCode className="h-8 w-8" />
-          </div>
+        <div className="flex items-center justify-between gap-2 py-4">
+          <span className="paper-muted text-[10px]">Total</span>
+          <strong className="text-lg">
+            {data.price != null
+              ? `${formatCurrency(data.price, data.currency)} ${data.currency}`
+              : "Por definir"}
+          </strong>
         </div>
-      </div>
-
-      <div className="border-t border-cream-200 bg-cream-50 px-5 py-4 text-[10px] leading-relaxed text-ink-500">
-        <p className="font-semibold text-ink-700">Meeting Point Tulum Airport</p>
-        <p className="mb-2">{meetingPoints?.tulum_airport}</p>
-        <p className="font-semibold text-ink-700">Meeting Point Cancún Airport</p>
-        <p>{meetingPoints?.cancun_airport}</p>
+        <details className="paper-rule paper-muted border-t pb-3 pt-2 text-[9px] leading-relaxed">
+          <summary className="cursor-pointer font-medium">
+            Puntos de encuentro
+          </summary>
+          <p className="mt-2 font-semibold">Aeropuerto de Tulum</p>
+          <p>{settings?.meetingPoints?.tulum_airport}</p>
+          <p className="mt-2 font-semibold">Aeropuerto de Cancún</p>
+          <p>{settings?.meetingPoints?.cancun_airport}</p>
+        </details>
       </div>
     </div>
   );

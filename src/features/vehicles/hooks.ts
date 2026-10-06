@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabaseClient";
 import type { VehicleRow } from "@/types/database.types";
-import { createVehicle, updateVehicle, deleteVehicle, type VehicleInput } from "@/features/vehicles/api";
+import {
+  createVehicle,
+  updateVehicle,
+  deleteVehicle,
+  type VehicleInput,
+} from "@/features/vehicles/api";
 
 export function useVehicles() {
   return useQuery({
@@ -30,7 +35,8 @@ export function useCreateVehicle() {
 export function useUpdateVehicle() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Partial<VehicleInput> }) => updateVehicle(id, input),
+    mutationFn: ({ id, input }: { id: string; input: Partial<VehicleInput> }) =>
+      updateVehicle(id, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
   });
 }

@@ -12,6 +12,11 @@ import { ReservationActions } from "@/components/reservations/ReservationActions
 import { useReservations } from "@/features/reservations/hooks";
 import { formatCurrency, formatDate, formatTime } from "@/lib/format";
 import type { ReservationStatus } from "@/types/database.types";
+import { AgendaView } from "@/components/operations/AgendaView";
+import { DispatchBoard } from "@/components/operations/DispatchBoard";
+import { Badge } from "@/components/ui/Badge";
+import { QueryState } from "@/components/ui/QueryState";
+import { returnTimeLabel } from "@/lib/operations";
 
 const STATUS_OPTIONS: { value: ReservationStatus | "all"; label: string }[] = [
   { value: "all", label: "Todos los estados" },
@@ -24,6 +29,7 @@ const STATUS_OPTIONS: { value: ReservationStatus | "all"; label: string }[] = [
 
 export default function ReservationsPage() {
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"table" | "agenda" | "operations">("table");
   const [status, setStatus] = useState<ReservationStatus | "all">("all");
 
   const filters = useMemo(() => ({ search, status }), [search, status]);
@@ -56,7 +62,9 @@ export default function ReservationsPage() {
         </div>
         <Select
           value={status}
-          onChange={(e) => setStatus(e.target.value as ReservationStatus | "all")}
+          onChange={(e) =>
+            setStatus(e.target.value as ReservationStatus | "all")
+          }
           className="sm:w-56"
         >
           {STATUS_OPTIONS.map((opt) => (
@@ -66,74 +74,142 @@ export default function ReservationsPage() {
           ))}
         </Select>
       </div>
+      <div className="mb-4 flex gap-1">
+        {(["table", "agenda", "operations"] as const).map((v, i) => (
+          <Button
+            key={v}
+            size="sm"
+            variant={v === view ? "primary" : "secondary"}
+            onClick={() => setView(v)}
+          >
+            {["Tabla", "Agenda", "Operaciones"][i]}
+          </Button>
+        ))}
+      </div>
+      {isLoading && <QueryState loading />}
+      {view === "agenda" && !isLoading && !isError && (
+        <AgendaView reservations={reservations ?? []} />
+      )}
+      {view === "operations" && !isLoading && !isError && (
+        <DispatchBoard reservations={reservations ?? []} />
+      )}
 
-      <Card className="overflow-hidden">
-        {isError ? (
-          <div className="p-6">
-            <EmptyState
-              icon={CalendarRange}
-              title="No se pudo conectar a Supabase"
-              description="Configura tus credenciales en .env.local para ver las reservaciones reales."
-            />
-          </div>
-        ) : !isLoading && (reservations?.length ?? 0) === 0 ? (
-          <div className="p-6">
-            <EmptyState icon={CalendarRange} title="Sin reservaciones" description="Crea tu primer ticket para verlo aquí." />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[960px] text-sm">
-              <thead>
-                <tr className="border-b border-cream-200 text-left text-[11px] font-semibold uppercase tracking-wide text-ink-500">
-                  <th className="px-4 py-3">Folio</th>
-                  <th className="px-4 py-3">Cliente</th>
-                  <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3">Hora</th>
-                  <th className="px-4 py-3">Ruta</th>
-                  <th className="px-4 py-3">Personas</th>
-                  <th className="px-4 py-3">Vuelo</th>
-                  <th className="px-4 py-3">Vehículo</th>
-                  <th className="px-4 py-3">Precio</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reservations?.map((r) => (
-                  <tr key={r.id} className="border-b border-cream-200 last:border-0 hover:bg-cream-50">
-                    <td className="px-4 py-3 font-mono-tab text-xs text-ink-700">{r.folio}</td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-ink-900">{r.customer?.full_name ?? "—"}</p>
-                      <p className="text-xs text-ink-500">{r.customer?.phone}</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">{formatDate(r.date, "d MMM yyyy")}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{formatTime(r.time)}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-ink-700">
-                        {r.pickup_point} → {r.dropoff_point}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">{r.passengers}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-ink-500">{r.flight_number ?? "—"}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-ink-500">
-                      {r.vehicle ? `${r.vehicle.brand} ${r.vehicle.model}` : "—"}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap font-medium">
-                      {r.price != null ? formatCurrency(r.price, r.currency) : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={r.status} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <ReservationActions reservation={r} />
-                    </td>
+      {(view === "table" || isError) && (
+        <Card className="overflow-hidden">
+          {isError ? (
+            <div className="p-6">
+              <EmptyState
+                icon={CalendarRange}
+                title="No se pudo conectar a Supabase"
+                description="Configura tus credenciales en .env.local para ver las reservaciones reales."
+              />
+            </div>
+          ) : !isLoading && (reservations?.length ?? 0) === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                icon={CalendarRange}
+                title="Sin reservaciones"
+                description="Crea tu primer ticket para verlo aquí."
+              />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[960px] text-sm">
+                <thead>
+                  <tr className="border-b border-line text-left text-[11px] font-semibold uppercase tracking-wide text-ink-500">
+                    <th className="px-4 py-3">Folio</th>
+                    <th className="px-4 py-3">Cliente</th>
+                    <th className="px-4 py-3">Fecha</th>
+                    <th className="px-4 py-3">Hora ida</th>
+                    <th className="px-4 py-3">Hora regreso</th>
+                    <th className="px-4 py-3">Ruta</th>
+                    <th className="px-4 py-3">Personas</th>
+                    <th className="px-4 py-3">Vuelo</th>
+                    <th className="px-4 py-3">Vehículo</th>
+                    <th className="px-4 py-3">Conductor</th>
+                    <th className="px-4 py-3">Precio</th>
+                    <th className="px-4 py-3">Pago</th>
+                    <th className="px-4 py-3">Estado</th>
+                    <th className="px-4 py-3">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+                </thead>
+                <tbody>
+                  {reservations?.map((r) => (
+                    <tr
+                      key={r.id}
+                      className="border-b border-line last:border-0 hover:bg-surface-950"
+                    >
+                      <td className="px-4 py-3 font-mono-tab text-xs text-ink-700">
+                        {r.folio}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-ink-900">
+                          {r.customer?.full_name ?? "—"}
+                        </p>
+                        <p className="text-xs text-ink-500">
+                          {r.customer?.phone}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {formatDate(r.date, "d MMM yyyy")}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {formatTime(r.time)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {r.service_type === "redondo" ? (
+                          <>
+                            <Badge tone={r.return_time ? "neutral" : "warning"}>
+                              {returnTimeLabel(r.return_time)}
+                            </Badge>
+                            <p className="mt-1 text-[10px] text-ink-500">
+                              {formatDate(r.return_date)}
+                            </p>
+                          </>
+                        ) : (
+                          "Solo ida"
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-ink-700">
+                          {r.pickup_point} → {r.dropoff_point}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">{r.passengers}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-ink-500">
+                        {r.flight_number ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-ink-500">
+                        {r.vehicle
+                          ? `${r.vehicle.brand} ${r.vehicle.model}`
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-ink-500">
+                        {r.driver?.full_name ?? "Sin conductor"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap font-medium">
+                        {r.price != null
+                          ? formatCurrency(r.price, r.currency)
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-ink-500">
+                        {r.payment_method ?? "Sin método"}
+                        <p className="mt-1 text-[10px]">Cobro sin registro</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={r.status} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <ReservationActions reservation={r} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

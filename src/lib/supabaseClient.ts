@@ -15,8 +15,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // GenericTable son muy estrictos); las respuestas se tipan manualmente
 // en cada hook contra src/types/database.types.ts.
 export const supabase = createClient(
-  supabaseUrl ?? "https://placeholder.supabase.co",
-  supabaseAnonKey ?? "placeholder-anon-key",
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-anon-key",
   {
     auth: {
       persistSession: true,

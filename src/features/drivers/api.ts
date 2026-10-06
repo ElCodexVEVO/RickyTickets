@@ -11,18 +11,33 @@ export interface DriverInput {
 }
 
 export async function createDriver(input: DriverInput): Promise<DriverRow> {
-  const { data, error } = await supabase.from("drivers").insert(input).select().single();
+  const { data, error } = await supabase
+    .from("drivers")
+    .insert(input)
+    .select()
+    .single();
   if (error) throw error;
   return data;
 }
 
-export async function updateDriver(id: string, input: Partial<DriverInput>): Promise<DriverRow> {
-  const { data, error } = await supabase.from("drivers").update(input).eq("id", id).select().single();
+export async function updateDriver(
+  id: string,
+  input: Partial<DriverInput>,
+): Promise<DriverRow> {
+  const { data, error } = await supabase
+    .from("drivers")
+    .update(input)
+    .eq("id", id)
+    .select()
+    .single();
   if (error) throw error;
   return data;
 }
 
 export async function deleteDriver(id: string): Promise<void> {
-  const { error } = await supabase.from("drivers").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  const { error } = await supabase
+    .from("drivers")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
   if (error) throw error;
 }

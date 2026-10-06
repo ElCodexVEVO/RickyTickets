@@ -12,16 +12,24 @@ import {
   getReservationFiles,
   type ReservationFilters,
 } from "@/features/reservations/api";
-import type { ReservationStatus, ReservationWithRelations } from "@/types/database.types";
-import { getOrCreateTicketPdfUrl } from "@/pdf/generateTicketPdf";
+import type {
+  ReservationStatus,
+  ReservationWithRelations,
+} from "@/types/database.types";
 import { useCompanySettings } from "@/features/settings/hooks";
 
-function invalidateReservationQueries(queryClient: ReturnType<typeof useQueryClient>) {
+function invalidateReservationQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
   queryClient.invalidateQueries({ queryKey: ["reservations"] });
   queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
   queryClient.invalidateQueries({ queryKey: ["dashboard-upcoming"] });
   queryClient.invalidateQueries({ queryKey: ["dashboard-recent"] });
   queryClient.invalidateQueries({ queryKey: ["customers"] });
+  queryClient.invalidateQueries({ queryKey: ["reports"] });
+  queryClient.invalidateQueries({ queryKey: ["activity"] });
+  queryClient.invalidateQueries({ queryKey: ["public-ticket"] });
+  queryClient.invalidateQueries({ queryKey: ["dashboard-revenue-trend"] });
 }
 
 export function useCreateReservation() {
@@ -32,10 +40,11 @@ export function useCreateReservation() {
   });
 }
 
-export function useReservations(filters: ReservationFilters) {
+export function useReservations(filters: ReservationFilters, enabled = true) {
   return useQuery({
     queryKey: ["reservations", filters],
     queryFn: () => listReservations(filters),
+    enabled,
     retry: 0,
   });
 }
@@ -70,7 +79,8 @@ export function useReservationFiles(id: string | undefined) {
 export function useCancelReservation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, note }: { id: string; note?: string }) => cancelReservationRpc(id, note),
+    mutationFn: ({ id, note }: { id: string; note?: string }) =>
+      cancelReservationRpc(id, note),
     onSuccess: () => invalidateReservationQueries(queryClient),
   });
 }
@@ -86,20 +96,32 @@ export function useSoftDeleteReservation() {
 export function useUpdateReservationFields(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (patch: Partial<ReservationEditableFields>) => updateReservationFields(id, patch),
+    mutationFn: (patch: Partial<ReservationEditableFields>) =>
+      updateReservationFields(id, patch),
     onSuccess: () => {
       invalidateReservationQueries(queryClient);
-      queryClient.invalidateQueries({ queryKey: ["reservations", "detail", id] });
+      queryClient.invalidateQueries({
+        queryKey: ["reservations", "detail", id],
+      });
     },
   });
 }
 
 export function useTicketPdfUrl() {
   const settings = useCompanySettings();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (reservation: ReservationWithRelations) => {
-      if (!settings.data) throw new Error("La configuración de la empresa aún no está disponible.");
-      return getOrCreateTicketPdfUrl({
+      if (!settings.data)
+        throw new Error(
+          "La configuración de la empresa aún no está disponible.",
+        );
+      const { generateAndStoreTicketPdf } =
+        await import("@/pdf/generateTicketPdf");
+      // Siempre regenera: el PDF debe reflejar el estado y los datos actuales
+      // de la reservación (precio, estado, etc.), nunca una versión cacheada
+      // de cuando se creó el ticket.
+      const { signedUrl } = await generateAndStoreTicketPdf({
         reservation,
         customer: {
           full_name: reservation.customer?.full_name ?? "Cliente",
@@ -110,6 +132,13 @@ export function useTicketPdfUrl() {
         meetingPoints: settings.data.meetingPoints,
         ticketTerms: settings.data.ticketTerms,
       });
+      if (!signedUrl) throw new Error("No se pudo generar la URL del PDF");
+      return signedUrl;
+    },
+    onSuccess: (_url, reservation) => {
+      queryClient.invalidateQueries({
+        queryKey: ["reservations", "files", reservation.id],
+      });
     },
   });
 }
@@ -117,7 +146,8 @@ export function useTicketPdfUrl() {
 export function useUpdateReservationStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ReservationStatus }) => updateReservationStatus(id, status),
+    mutationFn: ({ id, status }: { id: string; status: ReservationStatus }) =>
+      updateReservationStatus(id, status),
     onSuccess: () => invalidateReservationQueries(queryClient),
   });
 }
