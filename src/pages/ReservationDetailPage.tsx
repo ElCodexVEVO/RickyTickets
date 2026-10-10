@@ -153,6 +153,20 @@ export default function ReservationDetailPage() {
         }
       />
       <QueryState error={pdf.error || status.error || remove.error} />
+      {r.amaya_code && (
+        <p className="mb-4 rounded-lg border border-line p-3 text-sm text-ink-700">
+          Reserva compartida con Amaya · {r.amaya_code}.
+          {r.amaya_payment?.verified && (
+            <>
+              {" "}
+              Pago verificado en Amaya: {r.amaya_payment.amount}{" "}
+              {r.amaya_payment.currency} ({r.amaya_payment.status}).
+            </>
+          )}{" "}
+          El anticipo de Ricky se registra por separado; cancelar no reembolsa
+          el pago de Amaya.
+        </p>
+      )}
       {draft && (
         <p className="mb-4 rounded-lg border border-line bg-carbon-900 p-3 text-sm text-ink-700">
           Borrador sin ticket. Complétalo con «Guardar y generar PDF» para
