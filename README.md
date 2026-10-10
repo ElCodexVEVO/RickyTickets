@@ -118,3 +118,9 @@ supabase/         Migraciones y Edge Functions
 tests/           Pruebas aisladas de negocio, SQL, formulario y PDF
 docs/            Auditoría y entrega técnica
 ```
+
+# Integración con Amaya
+
+El puente de reservas incluye la migración 0009, la Edge Function `amaya-sync` y
+pruebas aisladas. Su activación en Supabase está pendiente: seguir
+[docs/AMAYA_SYNC.md](docs/AMAYA_SYNC.md) antes de usarlo en producción.

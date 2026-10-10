@@ -64,6 +64,16 @@ export interface ReservationLocationFields {
 export interface ReservationRow extends ReservationLocationFields {
   id: string;
   folio: string;
+  // 0009. Optional until the bridge migration is installed.
+  amaya_id?: string | null;
+  amaya_code?: string | null;
+  sync_revision?: number;
+  amaya_payment?: {
+    status: string;
+    verified: boolean;
+    amount: number;
+    currency: string;
+  } | null;
   customer_id: string;
   service_type: ServiceType;
   service_catalog_item_id?: string | null;

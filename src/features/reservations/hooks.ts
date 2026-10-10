@@ -46,6 +46,8 @@ export function useReservations(filters: ReservationFilters, enabled = true) {
   return useQuery({
     queryKey: ["reservations", filters],
     queryFn: () => listReservations(filters),
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
     enabled,
     retry: 0,
   });
@@ -55,6 +57,8 @@ export function useReservation(id: string | undefined) {
   return useQuery({
     queryKey: ["reservations", "detail", id],
     queryFn: () => getReservation(id!),
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
     enabled: !!id,
     retry: 0,
   });
@@ -64,6 +68,8 @@ export function useReservationStatusHistory(id: string | undefined) {
   return useQuery({
     queryKey: ["reservations", "history", id],
     queryFn: () => getReservationStatusHistory(id!),
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
     enabled: !!id,
     retry: 0,
   });

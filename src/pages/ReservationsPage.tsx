@@ -146,6 +146,11 @@ export default function ReservationsPage() {
                     >
                       <td className="px-4 py-3 font-mono-tab text-xs text-ink-700">
                         {r.folio}
+                        {r.amaya_code && (
+                          <p className="mt-1 text-xs text-ink-500">
+                            Amaya · {r.amaya_code}
+                          </p>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <p className="font-medium text-ink-900">

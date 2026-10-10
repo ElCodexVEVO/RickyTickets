@@ -57,6 +57,7 @@ beforeAll(async () => {
     "0006_reservation_service_catalog.sql",
     "0007_reservation_locations.sql",
     "0008_single_page_reservations.sql",
+    "0009_amaya_sync.sql",
   ]) {
     const sql = (
       await readFile(
@@ -81,6 +82,198 @@ beforeAll(async () => {
 });
 beforeEach(async () => asUser(admin));
 afterAll(async () => db?.close());
+
+const amayaPayload = {
+  customer_name: "Amaya aislada",
+  customer_phone: "+529990000099",
+  customer_email: "bridge@isolated.test",
+  pickup_point: "Aeropuerto Tulum",
+  dropoff_point: "Hotel",
+  hotel: "Hotel",
+  date: "2026-11-20",
+  time: "14:30",
+  service_type: "redondo",
+  return_date: "2026-11-25",
+  return_time: null,
+  return_pickup_point: "Hotel",
+  return_dropoff_point: "Aeropuerto Tulum",
+  passengers: 2,
+  status: "confirmed",
+  notes: null,
+  price: 195,
+  currency: "USD",
+  amaya_code: "AMY-TEST",
+  amaya_payment: {
+    status: "paid",
+    verified: true,
+    amount: 195,
+    currency: "USD",
+  },
+};
+type BridgeResult = {
+  conflict: boolean;
+  reservation: {
+    id: string;
+    revision: number;
+    folio: string;
+    amaya_id: string;
+    return_time: string | null;
+    deposit: number;
+    amaya_payment: unknown;
+  };
+};
+async function bridge(
+  event: string,
+  amayaId: string,
+  reservationId: string | null = null,
+  revision: number | null = null,
+  patch: object = amayaPayload,
+) {
+  const r = await db.query<{ result: BridgeResult }>(
+    "select amaya_sync_apply($1,$2,$3,$4,$5::jsonb) result",
+    [event, reservationId, amayaId, revision, JSON.stringify(patch)],
+  );
+  return r.rows[0].result;
+}
+describe("Puente de Amaya: integridad y autorización", () => {
+  it("no permite invocar el puente con claves públicas ni sesiones del navegador", async () => {
+    for (const role of ["anon", "authenticated"]) {
+      await asUser(role === "anon" ? "" : admin, role);
+      await expect(
+        db.query("select amaya_sync_list(null,100)"),
+      ).rejects.toThrow(/permission denied/);
+      await expect(
+        bridge(crypto.randomUUID(), crypto.randomUUID()),
+      ).rejects.toThrow(/permission denied/);
+    }
+  });
+  it("reintenta la misma operación sin duplicar ni volver a escribir cambios de Ricky", async () => {
+    await asUser("", "service_role");
+    const event = crypto.randomUUID(),
+      amayaId = crypto.randomUUID();
+    const first = await bridge(event, amayaId);
+    expect(first.reservation.folio).toMatch(/^DT-\d{4}-\d{6}$/);
+    expect(first.reservation.return_time).toBeNull();
+    expect(first.reservation.deposit).toBe(0);
+    expect(first.reservation.amaya_payment).toEqual(amayaPayload.amaya_payment);
+    expect(await bridge(event, amayaId)).toEqual(first);
+    await asUser(admin);
+    await db.query(
+      "update reservations set time='15:45',deposit=35 where id=$1",
+      [first.reservation.id],
+    );
+    await asUser("", "service_role");
+    expect(await bridge(event, amayaId)).toEqual(first);
+    await asUser(admin);
+    const stored = await db.query<{
+      time: string;
+      deposit: string;
+      count: string;
+    }>(
+      "select time,deposit,(select count(*) from reservations where amaya_id=$2) count from reservations where id=$1",
+      [first.reservation.id, amayaId],
+    );
+    expect(stored.rows[0].time).toBe("15:45:00");
+    expect(Number(stored.rows[0].deposit)).toBe(35);
+    expect(Number(stored.rows[0].count)).toBe(1);
+  });
+  it("devuelve un conflicto en vez de sobrescribir una edición más reciente", async () => {
+    await asUser("", "service_role");
+    const amayaId = crypto.randomUUID();
+    const first = await bridge(crypto.randomUUID(), amayaId);
+    await asUser(admin);
+    await db.query("update reservations set time='18:20' where id=$1", [
+      first.reservation.id,
+    ]);
+    await asUser("", "service_role");
+    const stale = await bridge(
+      crypto.randomUUID(),
+      amayaId,
+      first.reservation.id,
+      first.reservation.revision,
+      { time: "16:00" },
+    );
+    expect(stale.conflict).toBe(true);
+    expect(stale.reservation.revision).toBeGreaterThan(
+      first.reservation.revision,
+    );
+    const resolved = await bridge(
+      crypto.randomUUID(),
+      amayaId,
+      first.reservation.id,
+      stale.reservation.revision,
+      { time: "16:00", status: "cancelled" },
+    );
+    expect(resolved.conflict).toBe(false);
+    expect(resolved.reservation.deposit).toBe(0);
+    expect(resolved.reservation.amaya_payment).toEqual(
+      amayaPayload.amaya_payment,
+    );
+  });
+  it("rechaza reutilizar una clave para otra petición y no permite cambiar el importe", async () => {
+    await asUser("", "service_role");
+    const event = crypto.randomUUID(),
+      amayaId = crypto.randomUUID();
+    const first = await bridge(event, amayaId);
+    await expect(
+      bridge(event, amayaId, null, null, { ...amayaPayload, time: "19:00" }),
+    ).rejects.toThrow(/Idempotency/);
+    await expect(
+      bridge(
+        crypto.randomUUID(),
+        amayaId,
+        first.reservation.id,
+        first.reservation.revision,
+        { price: 1 },
+      ),
+    ).rejects.toThrow(/reconciliation/);
+    await expect(
+      bridge(
+        crypto.randomUUID(),
+        amayaId,
+        first.reservation.id,
+        first.reservation.revision,
+        { deposit: 195 },
+      ),
+    ).rejects.toThrow(/Unsupported/);
+  });
+  it("la paginación detecta cambios de cliente y eliminaciones sin exponerlos al público", async () => {
+    const native = await create();
+    const before = await db.query<{
+      sync_revision: number;
+      customer_id: string;
+    }>("select sync_revision,customer_id from reservations where id=$1", [
+      native.id,
+    ]);
+    await db.query(
+      "update customers set full_name='Nombre corregido' where id=$1",
+      [before.rows[0].customer_id],
+    );
+    await db.query("select soft_delete_reservation($1)", [native.id]);
+    await asUser("", "service_role");
+    const listed: unknown[] = [];
+    let cursor: string | null = null;
+    do {
+      const result = await db.query<{
+        page: {
+          id: string;
+          revision: number;
+          deleted: boolean;
+          customer_name: string;
+        }[];
+      }>("select amaya_sync_list($1,2) page", [cursor]);
+      const page = result.rows[0].page;
+      listed.push(...page);
+      cursor = page.length === 2 ? page.at(-1)!.id : null;
+    } while (cursor);
+    const found = listed.find(
+      (r) => (r as { id: string }).id === native.id,
+    ) as { revision: number; deleted: boolean; customer_name: string };
+    expect(found.deleted).toBe(true);
+    expect(found.customer_name).toBe("Nombre corregido");
+    expect(found.revision).toBeGreaterThan(before.rows[0].sync_revision);
+  });
+});
 describe("Migraciones y operaciones en PostgreSQL aislado", () => {
   it("crea regreso NULL, conserva folio y confirma después una hora real", async () => {
     const r = await create();

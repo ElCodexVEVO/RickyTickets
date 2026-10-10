@@ -1,0 +1,3 @@
+[functions.amaya-sync]
+# Custom HMAC is verified inside the handler before any database access.
+verify_jwt = false
